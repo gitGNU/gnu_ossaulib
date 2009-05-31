@@ -1,17 +1,16 @@
 
-(defvar bbdb-file (expand-file-name "~/BBDB"))
+;; BBDB export filter.
+;;
+;; Will be invoked as `emacs --batch -l bbdb-export.el', with standard
+;; input providing the name of the BBDB database file to export.
+;;
+;; Writes contact files to the current directory, which it can assume
+;; to be initially empty.
 
-(defun bbdb-export (dir)
-  (interactive "DExport to directory: ")
-  (let ((outdir (file-name-as-directory
-		 (expand-file-name 
-		  (format-time-string "%Y%m%d-%H%M")
-		  dir)))
-	(bbdb-entry))
-    (make-directory outdir)
-    (set-buffer (find-file-noselect bbdb-file))
-    (goto-char (point-min))
-    (setq bbdb-entry (read (current-buffer)))
+(defvar outdir default-directory)
+
+(defun bbdb-export ()
+  (let ((bbdb-entry (read)))
     (while bbdb-entry
       (let ((first-names (aref bbdb-entry 0))
 	    (last-name (aref bbdb-entry 1))
@@ -53,5 +52,12 @@
 		(insert "\n")))
 	    (write-region (point-min) (point-max) contact-file))))
       (setq bbdb-entry (condition-case nil
-			   (read (current-buffer))
+			   (read)
 			 (end-of-file nil))))))
+
+(let ((bbdb-file (read t)))
+  (message "%s" bbdb-file)
+  (find-file bbdb-file)
+  (goto-char (point-min))
+  (setq standard-input (current-buffer))
+  (bbdb-export))
