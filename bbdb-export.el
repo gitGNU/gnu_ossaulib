@@ -48,7 +48,8 @@
 		      x-fields (cdr x-fields))
 		(insert "X-BBDB-FIELD-" (number-to-string (car x-field)) "\n"
 			" ")
-		(prin1 (cdr x-field) (current-buffer))
+		(let ((print-escape-newlines t))
+		  (prin1 (cdr x-field) (current-buffer)))
 		(insert "\n")))
 	    (write-region (point-min) (point-max) contact-file))))
       (setq bbdb-entry (condition-case nil
