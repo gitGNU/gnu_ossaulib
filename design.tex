@@ -1,0 +1,153 @@
+\documentclass{article}
+
+\begin{document}
+
+\section{Introduction}
+
+A common modern experience is to have contact information in many
+different places.  In Outlook, BBDB, Evolution, your mobile phone,
+your PDA, and so on.\footnote{And of course, in a paper address book
+  --- but unfortunately software cannot help with that.}  This article
+discusses the problem of keeping this information in sync, and
+proposes a solution.
+
+Keeping contact information ``in sync'' means copying changes that are
+made in one place --- new contacts, removal of contacts that are no
+longer wanted, and updates to existing contacts --- to all the other
+places where those changes make sense.  Conceptually this is simple,
+but complications start to arise when one starts looking at the
+details.
+
+\begin{itemize}
+
+\item When different changes are made to a contact in different
+  places, how can those changes easily be reconciled?  (Bearing in
+  mind that the different places may use different formats for their
+  contact information.)
+
+\item If the contact database from one place has a particular contact,
+  and that from another place does not, how can we tell if that
+  contact should exist in the merged database?  (It might have been
+  deliberately deleted from the second place's contacts, and therefore
+  should be deleted from other places too.)
+
+\item Suppose a contact database in one place can contain names,
+  addresses and phone numbers, while that in another place can have
+  names and phone numbers only.  When incorporating updated and new
+  contacts from the latter place, how can the software avoid thinking
+  that all of the address information has been deliberately deleted
+  (and so delete it from the merged database too)?
+
+\end{itemize}
+
+As far as I know there isn't yet any free software that addresses
+these problems.  The rest of this article is my proposal for a program
+that does.
+
+\section{Ideas}
+
+It seems to me that the processing required for contact
+synchronisation is a combination of two things.
+
+\begin{itemize}
+
+\item Conversion between different contact information formats.
+
+\item Revision history tracking.
+
+\end{itemize}
+
+The first of these is obvious.  The second is less so but actually
+crucial, because when we have two versions $X$ and $Y$ of a contact,
+and are trying to decide which is better, history allows a program to
+see how $X$ and $Y$ each differ from the previously known information
+for that contact; in practice this often means that the program can
+reliably and automatically determine what the merged contact should
+be.  Maintaining a history also means that it is not a disaster if the
+program occasionally makes a mistake, because the user can retrieve
+any lost information.
+
+There is already excellent free software that does revision history
+tracking, namely Git.\footnote{And of course there are many other
+  candidates, but Git is the one that I am most familiar with.}  If we
+choose to use Git to store and manage the repository of current and
+historical contacts, the other points that we need to specify, for a
+complete design, are as follows.
+
+\begin{itemize}
+
+\item The format of the master database for contact information.
+
+\item In general, how conversion routines for particular other formats
+  will convert to and from this master format.
+
+\item How the high level operations of direct interest to the user
+  will map onto operations on the Git repository.
+
+\end{itemize}
+
+\section{Master database format}
+
+In the master database, each contact is in its own file, named
+``\_FIRST-NAMES\_LAST-NAME''.  The contents of a contact file look like
+this:
+
+\begin{verbatim}
+FIRST-NAMES
+ John Henry
+LAST-NAME
+ Doe
+ADDRESS home
+ 45 Church Street
+ London
+ E8 4JK
+ADDRESS work
+ 8 Russell Square
+ Portsmouth
+ PO21 8HH
+PHONE home
+ 020 7733 9245
+X-BBDB-NOTES
+ Miscellaneous notes here
+\end{verbatim}
+
+The key design points of this format are that
+
+\begin{itemize}
+
+\item it is easily readable and mergeable by humans.  Most merging
+  tools work line-by-line, so it is helpful for merging to have each
+  piece of information on its own line.
+
+\item it supports multiple phone numbers and addresses
+
+\item it supports additional fields that are specific to particular
+  contact systems (in this case BBDB) and cannot be converted to other
+  systems, but still need to be preserved and tracked.
+
+\end{itemize}
+
+Technical details are as follows.
+
+\begin{itemize}
+
+\item The contact is a collection of fields.
+
+\item Each field consists of
+  \begin{itemize}
+    \item the field name, in capitals
+    \item in some cases (ADDRESS and PHONE), a descriptive identifier
+      for the field, to distinguish it from other instances of the
+      same field
+    \item the field data, on a series of lines beginning with a space.
+  \end{itemize}
+
+\item The fields may be arranged in any order.
+
+\end{itemize}
+
+\section{Conversion to and from the master format}
+
+[...to be continued...]
+
+\end{document}
