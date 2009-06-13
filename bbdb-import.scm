@@ -12,16 +12,17 @@
   "Read contact files from DIR and generate corresponding BBDB database."
   (let ((pipe (open-output-pipe
 	       "emacs --batch -q --no-site-file -l bbdb-import.el")))
-    (;with-output-to-port pipe
+    (with-output-to-port pipe
       (lambda ()
-	(nftw dir maybe-import-contact)))))
+	(nftw dir maybe-import-contact)))
+    (close-pipe pipe)))
 
 (define (maybe-import-contact filename statinfo flag base level)
   (and (eq? flag 'regular)
        (= level 1)
        (char=? (string-ref (basename filename) 0) #\_)
        (begin
-	 (format #t "Importing ~a\n" (basename filename))
+	 ;;(format #t "Importing ~a\n" (basename filename))
 	 (with-input-from-file filename import-contact)))
   #t)
 
@@ -33,7 +34,7 @@
       (if (eof-object? line)
 	  (begin
 	    ;; Send the contact to Emacs for further processing.
-	    (write (reverse! (acons field-key field-value contact)))
+	    (write (reverse! (acons field-key (reverse! field-value) contact)))
 	    (newline))		   
 	  (begin
 	    ;; Format does not allow empty lines.
@@ -53,10 +54,9 @@
 		  (let ((match-data (string-match "^([^ ]+) ?([^ ]*.*)$" line)))
 		    (assert match-data)
 		    (loop (if field-key
-			      (acons field-key field-value contact)
+			      (acons field-key (reverse! field-value) contact)
 			      contact)
-			  (cons (match:substring match-data 1)
-				(match:substring match-data 2))
-			  '())))))))))
+			  (string->symbol (match:substring match-data 1))
+			  (list (match:substring match-data 2)))))))))))
 
 (apply bbdb-import (cdr (command-line)))
