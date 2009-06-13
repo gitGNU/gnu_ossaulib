@@ -51,6 +51,8 @@
 		(let ((print-escape-newlines t))
 		  (prin1 (cdr x-field) (current-buffer)))
 		(insert "\n")))
+	    (or last-name
+		(insert "X-BBDB-LAST-NAME-NIL\n"))
 	    (write-region (point-min) (point-max) contact-file))))
       (setq bbdb-entry (condition-case nil
 			   (read)
