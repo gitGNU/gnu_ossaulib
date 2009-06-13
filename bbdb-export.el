@@ -53,6 +53,8 @@
 		(insert "\n")))
 	    (or last-name
 		(insert "X-BBDB-LAST-NAME-NIL\n"))
+	    (while (file-exists-p contact-file)
+	      (setq contact-file (concat contact-file "_")))
 	    (write-region (point-min) (point-max) contact-file))))
       (setq bbdb-entry (condition-case nil
 			   (read)
