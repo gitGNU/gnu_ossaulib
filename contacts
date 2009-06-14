@@ -1,0 +1,100 @@
+#!/usr/local/bin/guile -s
+
+Contacts - top level executable guile -*- scheme -*- script
+
+!#
+
+(turn-on-debugging)
+
+(define (main . args)
+  (if (null? args)
+      (usage-error "You need to give a command argument, such as `import'."))
+  (let* ((command (car args))
+	 (command-proc (and=> (assoc command command-table) cadr)))
+    (if command-proc
+	(command-proc (cdr args))
+	(usage-error "`~a' is not a recognized command." command))))
+
+(define (usage-error msg . args)
+  (let (;;(possible-commands
+	;; (substring (apply string-append
+	;;		   (map (lambda (command-entry)
+	;;			  (string-append " | " (car command-entry)))
+	;;			command-table))
+	;;	    3))
+	(details (apply string-append
+			(map (lambda (command-entry)
+			       (string-append "\t"
+					      (car (command-line))
+					      " "
+					      (car command-entry)
+					      " "
+					      (caddr command-entry)
+					      "\n"))
+			     command-table))))
+    (newline)
+    (apply error
+	   (string-append msg
+			  "\n\n"
+			  ;;"Usage: " (car (command-line))
+			  ;;" (" possible-commands ") ...\n"
+			  "Possible invocations are:\n"
+			  details)
+	   args)))
+
+(define (import args)
+  ;; We need 2 arguments, a branch name and a file (or directory) name
+  ;; to import from.
+  (or (= (length args) 2)
+      (usage-error "The `import' command needs 2 arguments:
+- a branch name
+- and a file (or directory) name to import from. ~s" args))
+  (let ((branch (car args))
+	(source (cadr args)))
+    ;; Initialize the Git repository if it doesn't already exist.
+    (ensure-repository)
+    ))
+
+(define command-table `(("import" ,import "<branch> <file-or-dir>")
+			("export" ,import "")))
+
+(define contacts-dir (in-vicinity (getenv "HOME") ".contacts"))
+(define repository-stamp-file-name "CONTACTS")
+
+(define (with-working-directory* dir thunk)
+  (let ((outer (getcwd)))
+    (dynamic-wind
+	(lambda () (chdir dir))
+	thunk
+	(lambda () (chdir outer)))))
+
+(define-macro (with-working-directory dir . body)
+  `(with-working-directory* ,dir (lambda () ,@body)))
+
+(let ((primitive-system system))
+  (set! system (lambda (cmd . args)
+		 (primitive-system (apply format #f cmd args)))))
+
+(define (ensure-repository)
+  (ensure-directory contacts-dir)
+  (let ((repository-dir (in-vicinity contacts-dir "repository")))
+    (ensure-directory repository-dir)
+    (with-working-directory repository-dir
+      (or (file-exists? ".git")
+	  (begin
+	    (system "git init")
+	    (with-output-to-file repository-stamp-file-name
+	      (lambda ()
+		(format #t "Created on ~a\n"
+			(strftime "%Y%m%d-%H%M" (localtime (current-time))))))
+	    (system "git add ~s" repository-stamp-file-name)
+	    (system "git commit -m ~s" "Repository created"))))))
+
+(define (ensure-directory dir)
+  (if (file-exists? dir)
+      (or (file-is-directory? dir)
+	  (error "`~a' already exists but is not a directory." dir))
+      (mkdir dir)))
+
+;; Invoke `main'.
+(apply main (cdr (command-line)))
