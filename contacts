@@ -6,6 +6,18 @@ Contacts - top level executable guile -*- scheme -*- script
 
 (turn-on-debugging)
 
+(use-modules (ice-9 regex))
+
+(let* ((bindir (dirname (car (command-line))))
+       (absdir (cond ((string=? bindir ".")
+		      (getcwd))
+		     ((string-match "^/" bindir)
+		      bindir)
+		     (else (in-vicinity (getcwd) bindir)))))
+  (set! %load-path (cons absdir %load-path)))
+
+(use-modules (ossau bbdb-export))
+
 (define (main . args)
   (if (null? args)
       (usage-error "You need to give a command argument, such as `import'."))
@@ -53,13 +65,32 @@ Contacts - top level executable guile -*- scheme -*- script
 	(source (cadr args)))
     ;; Initialize the Git repository if it doesn't already exist.
     (ensure-repository)
-    ))
+    (with-working-directory repository-dir
+      ;; Try to switch to the named branch.
+      (or (zero? (system "git checkout ~a >/dev/null 2>&1" branch))
+	  ;; Branch does not already exist, so must be created.
+	  (begin
+	    (system "git checkout ~a" root-tag-name)
+	    (system "git checkout -b ~a" branch)))
+      ;; Delete all existing contacts.
+      (system "rm -f _*")
+      ;; Export from the source (assuming for the moment that it is a
+      ;; BBDB source).
+      (bbdb-export source)
+      ;; Commit generated contacts.
+      (system "git add .")
+      (system "git commit -m ~s" "Import")
+      ;; Switch to master and cherry-pick the changes.
+      (system "git checkout master")
+      (system "git cherry-pick ~a" branch))))
 
 (define command-table `(("import" ,import "<branch> <file-or-dir>")
 			("export" ,import "")))
 
 (define contacts-dir (in-vicinity (getenv "HOME") ".contacts"))
+(define repository-dir (in-vicinity contacts-dir "repository"))
 (define repository-stamp-file-name "CONTACTS")
+(define root-tag-name "___root___")
 
 (define (with-working-directory* dir thunk)
   (let ((outer (getcwd)))
@@ -77,18 +108,18 @@ Contacts - top level executable guile -*- scheme -*- script
 
 (define (ensure-repository)
   (ensure-directory contacts-dir)
-  (let ((repository-dir (in-vicinity contacts-dir "repository")))
-    (ensure-directory repository-dir)
-    (with-working-directory repository-dir
-      (or (file-exists? ".git")
-	  (begin
-	    (system "git init")
-	    (with-output-to-file repository-stamp-file-name
-	      (lambda ()
-		(format #t "Created on ~a\n"
-			(strftime "%Y%m%d-%H%M" (localtime (current-time))))))
-	    (system "git add ~s" repository-stamp-file-name)
-	    (system "git commit -m ~s" "Repository created"))))))
+  (ensure-directory repository-dir)
+  (with-working-directory repository-dir
+    (or (file-exists? ".git")
+	(begin
+	  (system "git init")
+	  (with-output-to-file repository-stamp-file-name
+	    (lambda ()
+	      (format #t "Created on ~a\n"
+		      (strftime "%Y%m%d-%H%M" (localtime (current-time))))))
+	  (system "git add ~s" repository-stamp-file-name)
+	  (system "git commit -m ~s" "Repository created")
+	  (system "git tag ~a" root-tag-name)))))
 
 (define (ensure-directory dir)
   (if (file-exists? dir)
