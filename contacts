@@ -56,7 +56,7 @@ Contacts - top level executable guile -*- scheme -*- script
 			  details)
 	   args)))
 
-(define (import args)
+(define (do-import args)
   ;; We need 2 arguments, a branch name and a file (or directory) name
   ;; to import from.
   (or (= (length args) 2)
@@ -91,7 +91,7 @@ Contacts - top level executable guile -*- scheme -*- script
   ;; Stage the generated contacts.
   (system "git add ."))
 
-(define (export args)
+(define (do-export args)
   ;; We need 2 arguments, a branch name and a file (or directory) name
   ;; to export to.
   (or (= (length args) 2)
@@ -121,8 +121,8 @@ Contacts - top level executable guile -*- scheme -*- script
       ;; Switch back to master.
       (system "git checkout master"))))
 
-(define command-table `(("import" ,import "<branch> <file-or-dir>")
-			("export" ,export "<branch> <file-or-dir>")))
+(define command-table `(("import" ,do-import "<branch> <file-or-dir>")
+			("export" ,do-export "<branch> <file-or-dir>")))
 
 (define contacts-dir (in-vicinity (getenv "HOME") ".contacts"))
 (define repository-dir (in-vicinity contacts-dir "repository"))
