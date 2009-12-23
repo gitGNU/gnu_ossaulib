@@ -99,7 +99,7 @@ Contacts - top level executable guile -*- scheme -*- script
   ;; BBDB source).
   (bbdb-export source)
   ;; Stage the generated contacts.
-  (system "git add ."))
+  (system "git add _*"))
 
 (define (do-export args)
   ;; We need 2 arguments, a branch name and a file (or directory) name
