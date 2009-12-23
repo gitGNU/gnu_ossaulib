@@ -57,14 +57,14 @@ Contacts - top level executable guile -*- scheme -*- script
 					      "\n"))
 			     command-table))))
     (newline)
-    (apply error
-	   (string-append msg
-			  "\n\n"
-			  ;;"Usage: " (car (command-line))
-			  ;;" (" possible-commands ") ...\n"
-			  "Possible invocations are:\n"
-			  details)
-	   args)))
+    (error (apply format #f
+		  (string-append msg
+				 "\n\n"
+				 ;;"Usage: " (car (command-line))
+				 ;;" (" possible-commands ") ...\n"
+				 "Possible invocations are:\n"
+				 details)
+		  args))))
 
 (define (do-import args)
   ;; We need 2 arguments, a branch name and a file (or directory) name
