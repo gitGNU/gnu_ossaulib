@@ -1,4 +1,4 @@
-#!/usr/local/bin/guile -s
+#!/usr/bin/env guile
 
 Contacts - top level executable guile -*- scheme -*- script
 
