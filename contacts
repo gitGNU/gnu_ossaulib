@@ -8,15 +8,17 @@ Contacts - top level executable guile -*- scheme -*- script
 
 (use-modules (ice-9 regex))
 
-(let* ((bindir (dirname (car (command-line))))
-       (absdir (cond ((string=? bindir ".")
-		      (getcwd))
-		     ((string-match "^/" bindir)
-		      bindir)
-		     (else (in-vicinity (getcwd) bindir)))))
-  (set! %load-path (cons absdir %load-path)))
+(eval-when (load compile)
+  (let* ((bindir (dirname (car (command-line))))
+	 (absdir (cond ((string=? bindir ".")
+			(getcwd))
+		       ((string-match "^/" bindir)
+			bindir)
+		       (else (in-vicinity (getcwd) bindir)))))
+    (set! %load-path (cons absdir %load-path))))
 
-(use-modules (ossau bbdb-export))
+(use-modules (ossau bbdb-export)
+	     (ossau bbdb-import))
 
 (define (main . args)
   (if (null? args)
@@ -66,26 +68,61 @@ Contacts - top level executable guile -*- scheme -*- script
     ;; Initialize the Git repository if it doesn't already exist.
     (ensure-repository)
     (with-working-directory repository-dir
-      ;; Try to switch to the named branch.
-      (or (zero? (system "git checkout ~a >/dev/null 2>&1" branch))
-	  ;; Branch does not already exist, so must be created.
-	  (begin
-	    (system "git checkout ~a" root-tag-name)
-	    (system "git checkout -b ~a" branch)))
-      ;; Delete all existing contacts.
-      (system "rm -f _*")
-      ;; Export from the source (assuming for the moment that it is a
-      ;; BBDB source).
-      (bbdb-export source)
-      ;; Commit generated contacts.
-      (system "git add .")
-      (system "git commit -m ~s" "Import")
+      ;; Import and `git add' master format contact files.
+      (import-and-stage-contacts branch source)
+      ;; Commit them as an import.
+      (system "git commit -m ~s" (format #f "Import ~a" args))
       ;; Switch to master and cherry-pick the changes.
       (system "git checkout master")
       (system "git cherry-pick ~a" branch))))
 
+(define (import-and-stage-contacts branch source)
+  ;; Try to switch to the named branch.
+  (or (zero? (system "git checkout ~a >/dev/null 2>&1" branch))
+      ;; Branch does not already exist, so must be created.
+      (begin
+	(system "git checkout ~a" root-tag-name)
+	(system "git checkout -b ~a" branch)))
+  ;; Delete all existing contacts.
+  (system "rm -f _*")
+  ;; Export from the source (assuming for the moment that it is a
+  ;; BBDB source).
+  (bbdb-export source)
+  ;; Stage the generated contacts.
+  (system "git add ."))
+
+(define (export args)
+  ;; We need 2 arguments, a branch name and a file (or directory) name
+  ;; to export to.
+  (or (= (length args) 2)
+      (usage-error "The `export' command needs 2 arguments:
+- a branch name
+- and a file (or directory) name to export to. ~s" args))
+  (let ((branch (car args))
+	(target (cadr args)))
+    ;; Initialize the Git repository if it doesn't already exist.
+    (ensure-repository)
+    (with-working-directory repository-dir
+      ;; Switch to the master branch.
+      (system "git checkout master")
+      ;; Export to the target (assuming for the moment that it is a
+      ;; BBDB target).
+      (with-output-to-file target
+	(lambda ()
+	  (bbdb-import (getcwd))))
+      ;; Now reimport from the target.  The point of this is that the
+      ;; target format probably doesn't preserve every field that we
+      ;; have in the master format, and we don't want a future import
+      ;; of this target to look like a _deletion_ of those
+      ;; non-preserved fields.
+      (import-and-stage-contacts branch target)
+      ;; Commit them as an export and reimport.
+      (system "git commit -m ~s" "Export and reimport")
+      ;; Switch back to master.
+      (system "git checkout master"))))
+
 (define command-table `(("import" ,import "<branch> <file-or-dir>")
-			("export" ,import "")))
+			("export" ,export "<branch> <file-or-dir>")))
 
 (define contacts-dir (in-vicinity (getenv "HOME") ".contacts"))
 (define repository-dir (in-vicinity contacts-dir "repository"))
