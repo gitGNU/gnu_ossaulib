@@ -17,6 +17,16 @@ Contacts - top level executable guile -*- scheme -*- script
 		       (else (in-vicinity (getcwd) bindir)))))
     (set! %load-path (cons absdir %load-path))))
 
+(define (with-working-directory* dir thunk)
+  (let ((outer (getcwd)))
+    (dynamic-wind
+	(lambda () (chdir dir))
+	thunk
+	(lambda () (chdir outer)))))
+
+(define-macro (with-working-directory dir . body)
+  `(with-working-directory* ,dir (lambda () ,@body)))
+
 (use-modules (ossau bbdb-export)
 	     (ossau bbdb-import))
 
@@ -128,16 +138,6 @@ Contacts - top level executable guile -*- scheme -*- script
 (define repository-dir (in-vicinity contacts-dir "repository"))
 (define repository-stamp-file-name "CONTACTS")
 (define root-tag-name "___root___")
-
-(define (with-working-directory* dir thunk)
-  (let ((outer (getcwd)))
-    (dynamic-wind
-	(lambda () (chdir dir))
-	thunk
-	(lambda () (chdir outer)))))
-
-(define-macro (with-working-directory dir . body)
-  `(with-working-directory* ,dir (lambda () ,@body)))
 
 (let ((primitive-system system))
   (set! system (lambda (cmd . args)
