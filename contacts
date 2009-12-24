@@ -27,12 +27,12 @@ Contacts - top level executable guile -*- scheme -*- script
 (define-macro (with-working-directory dir . body)
   `(with-working-directory* ,dir (lambda () ,@body)))
 
-(use-modules (ossau bbdb-export)
-	     (ossau bbdb-import))
+(use-modules (ossau bbdb-from)
+	     (ossau bbdb-to))
 
 (define (main . args)
   (if (null? args)
-      (usage-error "You need to give a command argument, such as `import'."))
+      (usage-error "You need to give a command argument, such as `from'."))
   (let* ((command (car args))
 	 (command-proc (and=> (assoc command command-table) cadr)))
     (if command-proc
@@ -66,11 +66,11 @@ Contacts - top level executable guile -*- scheme -*- script
 				 details)
 		  args))))
 
-(define (do-import args)
+(define (do-from args)
   ;; We need 2 arguments, a branch name and a file (or directory) name
   ;; to import from.
   (or (= (length args) 2)
-      (usage-error "The `import' command needs 2 arguments:
+      (usage-error "The `from' command needs 2 arguments:
 - a branch name
 - and a file (or directory) name to import from. ~s" args))
   (let ((branch (car args))
@@ -97,15 +97,15 @@ Contacts - top level executable guile -*- scheme -*- script
   (system "rm -f _*")
   ;; Export from the source (assuming for the moment that it is a
   ;; BBDB source).
-  (bbdb-export source)
+  (bbdb-from source)
   ;; Stage the generated contacts.
   (system "git add _*"))
 
-(define (do-export args)
+(define (do-to args)
   ;; We need 2 arguments, a branch name and a file (or directory) name
   ;; to export to.
   (or (= (length args) 2)
-      (usage-error "The `export' command needs 2 arguments:
+      (usage-error "The `to' command needs 2 arguments:
 - a branch name
 - and a file (or directory) name to export to. ~s" args))
   (let ((branch (car args))
@@ -119,7 +119,7 @@ Contacts - top level executable guile -*- scheme -*- script
       ;; BBDB target).
       (with-output-to-file target
 	(lambda ()
-	  (bbdb-import (getcwd))))
+	  (bbdb-to (getcwd))))
       ;; Now reimport from the target.  The point of this is that the
       ;; target format probably doesn't preserve every field that we
       ;; have in the master format, and we don't want a future import
@@ -131,8 +131,8 @@ Contacts - top level executable guile -*- scheme -*- script
       ;; Switch back to master.
       (system "git checkout master"))))
 
-(define command-table `(("import" ,do-import "<branch> <file-or-dir>")
-			("export" ,do-export "<branch> <file-or-dir>")))
+(define command-table `(("from" ,do-from "<branch> <file-or-dir>")
+			("to" ,do-to "<branch> <file-or-dir>")))
 
 (define contacts-dir (in-vicinity (getenv "HOME") ".contacts"))
 (define repository-dir (in-vicinity contacts-dir "repository"))

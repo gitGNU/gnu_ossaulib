@@ -1,10 +1,10 @@
 
-(define-module (ossau bbdb-import)
+(define-module (ossau bbdb-to)
   #:use-module (ice-9 ftw)
   #:use-module (ice-9 popen)
   #:use-module (ice-9 rdelim)
   #:use-module (ice-9 regex)
-  #:export (bbdb-import))
+  #:export (bbdb-to))
 
 (define-macro (assert condition)
   `(or ,condition
@@ -12,11 +12,11 @@
 
 (define install-prefix (car %load-path))
 
-(define (bbdb-import dir)
+(define (bbdb-to dir)
   "Read contact files from DIR and generate corresponding BBDB database."
   (let ((pipe (open-output-pipe
 	       (format #f
-		       "emacs --batch -q --no-site-file -l \"~a/bbdb-import.el\""
+		       "emacs --batch -q --no-site-file -l \"~a/bbdb-to.el\""
 		       install-prefix))))
     (with-output-to-port pipe
       (lambda ()

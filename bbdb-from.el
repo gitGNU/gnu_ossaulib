@@ -1,7 +1,7 @@
 
-;; BBDB export filter.
+;; Convert from BBDB.
 ;;
-;; Will be invoked as `emacs --batch -l bbdb-export.el', with standard
+;; Will be invoked as `emacs --batch -l bbdb-from.el', with standard
 ;; input providing the name of the BBDB database file to export.
 ;;
 ;; Writes contact files to the current directory, which it can assume
@@ -9,7 +9,7 @@
 
 (defvar outdir default-directory)
 
-(defun bbdb-export ()
+(defun bbdb-from ()
   (let ((bbdb-entry (read)))
     (while bbdb-entry
       (let ((first-names (aref bbdb-entry 0))
@@ -65,4 +65,4 @@
   (find-file bbdb-file)
   (goto-char (point-min))
   (setq standard-input (current-buffer))
-  (bbdb-export))
+  (bbdb-from))
