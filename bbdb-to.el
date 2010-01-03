@@ -1,6 +1,8 @@
 
 (require 'cl)
 
+(princ ";")
+
 (defvar bbdb-entries nil)
 (defvar bbdb-entry nil)
 (defvar next-entry (read t))
@@ -46,6 +48,7 @@
  
 (setq bbdb-entries (sort bbdb-entries (function bbdb-sort)))
 
+(terpri)
 (let ((print-escape-newlines t))
   (while bbdb-entries
     (prin1 (car bbdb-entries))
