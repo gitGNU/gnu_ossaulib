@@ -5,6 +5,10 @@
   #:use-module (ice-9 regex)
   #:export (fold-contacts))
 
+(define-macro (assert condition)
+  `(or ,condition
+       (error "Assertion failed:" ',condition)))
+
 (define (fold-contacts dir init proc)
   (nftw dir
 	(lambda (filename statinfo flag base level)

@@ -4,10 +4,6 @@
   #:use-module (ossau contact)
   #:export (bbdb-to))
 
-(define-macro (assert condition)
-  `(or ,condition
-       (error "Assertion failed:" ',condition)))
-
 (define install-prefix (car %load-path))
 
 (define (bbdb-to dir)
