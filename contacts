@@ -115,6 +115,9 @@ Contacts - top level executable guile -*- scheme -*- script
     (with-working-directory repository-dir
       ;; Switch to the master branch.
       (system "git checkout master")
+      ;; If the branch that we're exporting to doesn't already exist,
+      ;; create it here.
+      (system "git branch ~a" branch)
       ;; Export to the target (assuming for the moment that it is a
       ;; BBDB target).
       (with-output-to-file target
