@@ -94,7 +94,7 @@ Contacts - top level executable guile -*- scheme -*- script
 	(system "git checkout ~a" root-tag-name)
 	(system "git checkout -b ~a" branch)))
   ;; Delete all existing contacts.
-  (system "rm -f _*")
+  (system "git rm -f _*")
   ;; Export from the source (assuming for the moment that it is a
   ;; BBDB source).
   (bbdb-from source)
