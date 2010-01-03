@@ -4,7 +4,7 @@ Contacts - top level executable guile -*- scheme -*- script
 
 !#
 
-(turn-on-debugging)
+;(turn-on-debugging)
 
 (use-modules (ice-9 regex))
 
