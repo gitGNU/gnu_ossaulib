@@ -3,68 +3,66 @@
   #:use-module (ice-9 rdelim)
   #:use-module (ice-9 receive)
   #:use-module (ice-9 string-fun)
+  #:use-module (rnrs bytevectors)
+  #:use-module (rnrs io ports)
   #:export (read-csv))
 
-(define (read-line-16)
-  (let ((s (read-line)))
-    (or (eof-object? s)
-	(read-char))
-    s))
-
 (define (read-csv file-name)
-  (with-input-from-file file-name
-    (lambda ()
-      (set-port-encoding! (current-input-port) "UTF16LE")
-      (let* ((header-line (read-line-16))
-	     (headers (separate-fields-discarding-char #\, header-line list))
-	     (nheaders (length headers)))
-	(write (cons 'header-line header-line))
-	(let loop ((data '())
-		   (entry '())
-		   (headers-to-read headers)
-		   (line (read-line-16)))
-	  (write (cons 'line line))
-	  (newline)
-	  (cond ((eof-object? line)
-		 (reverse! data))
-		((null? headers-to-read)
-		 (display entry)
-		 (newline)
-		 (loop (cons (reverse! entry) data)
-		       '()
-		       headers
-		       (read-line-16)))
-		((char=? (string-ref line 0) #\")
-		 (receive (value rest)
-			  (with-input-from-string line
-			    (lambda ()
-			      (let* ((value (false-if-exception (read)))
-				     (rest (and value
-						(not (null?
-						      (cdr headers-to-read)))
-						(begin
-						  (read-char)
-						  (read-line-16)))))
-				(write (cons 'value value)) (newline)
-				(write (cons 'rest rest)) (newline)
-				(values value rest))))
-			  (if value
-			      (loop data
-				    (acons (car headers-to-read)
-					   value
-					   entry)
-				    (cdr headers-to-read)
-				    rest)
-			      (loop data
-				    entry
-				    headers-to-read
-				    (string-append line "\n" (read-line-16))))))
-		(else
-		 (split-discarding-char #\, line
-					(lambda (value rest)
-					  (loop data
-						(acons (car headers-to-read)
-						       value
-						       entry)
-						(cdr headers-to-read)
-						rest))))))))))
+  (let ((s (utf16->string (get-bytevector-all (open-input-file file-name))
+			  'little)))
+
+    ;; Discard possible byte order mark.
+    (if (and (>= (string-length s) 1)
+	     (char=? (string-ref s 0) #\xfeff))
+	(set! s (substring s 1)))
+
+    ;; Split out the header line, which tells us how many fields there
+    ;; should be in each following line.
+    (split-discarding-char #\newline s
+      (lambda (header-line rest)
+	(let* ((headers (separate-fields-discarding-char #\, header-line list))
+	       (nheaders (length headers)))
+
+	  ;; Loop reading data fields.
+	  (let loop ((data '())
+		     (entry '())
+		     (headers-to-read headers)
+		     (rest rest))
+
+	    (cond ((null? headers-to-read)
+		   (loop (cons (reverse! entry) data)
+			 '()
+			 headers
+			 rest))
+
+		  ((zero? (string-length rest))
+		   (reverse! data))
+
+		  ((char=? (string-ref rest 0) #\")
+		   (receive (value after)
+		       (with-input-from-string rest
+			 (lambda ()
+			   (values (read)
+				   (begin
+				     (read-char)
+				     (let loop ((chars '())
+						(next (read-char)))
+				       (if (eof-object? next)
+					   (list->string (reverse! chars))
+					   (loop (cons next chars)
+						 (read-char))))))))
+		     (loop data
+			   (acons (car headers-to-read) value entry)
+			   (cdr headers-to-read)
+			   after)))
+
+		  (else
+		   (split-discarding-char (if (null? (cdr headers-to-read))
+					      #\newline
+					      #\,)
+					  rest
+		     (lambda (value rest)
+		       (loop data
+			     (acons (car headers-to-read) value entry)
+			     (cdr headers-to-read)
+			     rest)))))))))))
