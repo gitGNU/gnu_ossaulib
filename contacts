@@ -15,21 +15,14 @@ Contacts - top level executable guile -*- scheme -*- script
 		       ((string-match "^/" bindir)
 			bindir)
 		       (else (in-vicinity (getcwd) bindir)))))
-    (set! %load-path (cons absdir %load-path))))
+    (set! %load-path (cons (in-vicinity absdir "module") %load-path))))
 
-(define (with-working-directory* dir thunk)
-  (let ((outer (getcwd)))
-    (dynamic-wind
-	(lambda () (chdir dir))
-	thunk
-	(lambda () (chdir outer)))))
+(use-modules (utils)
+	     (contacts common)
+	     (contacts bbdb)
+	     (contacts google))
 
-(define-macro (with-working-directory dir . body)
-  `(with-working-directory* ,dir (lambda () ,@body)))
-
-(use-modules (ossau bbdb-from)
-	     (ossau bbdb-to))
-
+;; Main program: dispatch to command table.
 (define (main . args)
   (if (null? args)
       (usage-error "You need to give a command argument, such as `from'."))
@@ -39,6 +32,7 @@ Contacts - top level executable guile -*- scheme -*- script
 	(command-proc (cdr args))
 	(usage-error "`~a' is not a recognized command." command))))
 
+;; Report a usage error.
 (define (usage-error msg . args)
   (let (;;(possible-commands
 	;; (substring (apply string-append
@@ -66,38 +60,49 @@ Contacts - top level executable guile -*- scheme -*- script
 				 details)
 		  args))))
 
+;; Import contacts from some native source.
 (define (do-from args)
-  ;; We need 2 arguments, a branch name and a file (or directory) name
-  ;; to import from.
+
+  ;; We need two arguments: a branch name and a source name (usually a
+  ;; file or directory name) to import from.
   (or (= (length args) 2)
       (usage-error "The `from' command needs 2 arguments:
 - a branch name
 - and a file (or directory) name to import from. ~s" args))
   (let ((branch (car args))
 	(source (cadr args)))
+
     ;; Initialize the Git repository if it doesn't already exist.
     (ensure-repository)
+
     (with-working-directory repository-dir
+
       ;; Import and `git add' master format contact files.
       (import-and-stage-contacts branch source)
+
       ;; Commit them as an import.
       (system "git commit -m ~s" (format #f "Import ~a" args))
+
       ;; Switch to master and cherry-pick the changes.
       (system "git checkout master")
       (system "git cherry-pick ~a" branch))))
 
 (define (import-and-stage-contacts branch source)
+
   ;; Try to switch to the named branch.
   (or (zero? (system "git checkout ~a >/dev/null 2>&1" branch))
       ;; Branch does not already exist, so must be created.
       (begin
 	(system "git checkout ~a" root-tag-name)
 	(system "git checkout -b ~a" branch)))
+
   ;; Delete all existing contacts.
   (system "git rm -f _*")
-  ;; Export from the source (assuming for the moment that it is a
-  ;; BBDB source).
-  (bbdb-from source)
+
+  ;; Read contacts from the source.  (Assuming for the moment that it
+  ;; is BBDB - FIXME.)
+  (import <bbdb> source)
+
   ;; Stage the generated contacts.
   (system "git add _*"))
 

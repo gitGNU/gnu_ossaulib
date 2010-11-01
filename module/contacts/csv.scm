@@ -1,5 +1,5 @@
 
-(define-module (ossau csv)
+(define-module (contacts csv)
   #:use-module (ice-9 rdelim)
   #:use-module (ice-9 receive)
   #:use-module (ice-9 string-fun)
