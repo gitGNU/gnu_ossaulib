@@ -73,6 +73,24 @@
 	       (assoc-ref record (cdr spec))))
        name-map))
 
+(define standard-fields '("FIRST-NAMES"
+			  "LAST-NAME"
+			  "PHONE"))
+
+(define (in-standard-order alist)
+  (let loop ((fields standard-fields)
+	     (input alist)
+	     (output '()))
+    (if (null? fields)
+	(append (reverse! output) input)
+	(let* ((field (car fields))
+	       (value (assoc-ref input field)))
+	  (loop (cdr fields)
+		(assoc-remove! input field)
+		(if value
+		    (acons field value output)
+		    output))))))
+
 ;; Import contacts from some native format and write them out in the
 ;; standard format.
 (define (import class source)
@@ -102,7 +120,8 @@
     ;; Compute and add standard fields to each record in the database.
     (set! (records db)
 	  (map (lambda (record)
-		 (append (stringify (compute-standard-fields db record))
+		 (append (in-standard-order
+			  (stringify (compute-standard-fields db record)))
 			 record))
 	       (records db)))
 
