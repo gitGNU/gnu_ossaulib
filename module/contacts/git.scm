@@ -7,7 +7,7 @@
 
 ;; Import contacts from their native format into a branch of the Git repository.
 (define (import->git class source branch)
-    
+
   ;; Initialize the Git repository if it doesn't already exist.
   (ensure-repository)
 
@@ -62,7 +62,7 @@
 	  (system/format "git tag ~a" root-tag-name)))))
 
 (define (git->export branch class target)
-  
+
   ;; Initialize the Git repository if it doesn't already exist.
   (ensure-repository)
 
@@ -75,11 +75,8 @@
     ;; create it here.
     (system/format "git branch ~a" branch)
 
-    ;; Export to the target (assuming for the moment that it is a
-    ;; BBDB target).
-    (with-output-to-file target
-      (lambda ()
-	(bbdb-to (getcwd))))
+    ;; Export to the target.
+    (dir->export class target)
 
     ;; Now reimport from the target.  The point of this is that the
     ;; target format probably doesn't preserve every field that we

@@ -12,7 +12,8 @@
 	    native-write
 	    compute-standard-fields
 	    compute-native-fields
-	    import->dir))
+	    import->dir
+	    dir->export))
 
 (define-generic native-read)
 (define-generic native-write)
@@ -108,7 +109,7 @@
 	  ((null? standard-fields)
 	   "")
 	  (else (error "Bad value in computed standard fields: " standard-fields))))
-    
+
   ;; Make an empty database of the right class.
   (let ((db (make class)))
 
@@ -185,8 +186,34 @@
     ;; Ensure the file name is unique.
     (while (file-exists? file-name)
       (set! file-name (string-append file-name "_")))
-      
+
     ;; Write out all this record's fields.
     (with-output-to-file file-name
       (lambda ()
 	(for-each write-field record)))))
+
+;; Export contacts from the current directory to some native format.
+(define (dir->export class target)
+
+  (let ((db (make class)))
+
+    ;; Read standard format contacts from the current directory.
+    (set! (records db)
+	  (fold-contacts "." '() cons))
+
+    ;; Compute additional native fields from the standard fields.
+    (set! (records db)
+	  (map (lambda (record)
+		 (let loop ((computed-fields
+			     (computed-native-fields db record))
+			    (record record))
+		   (if (null? computed-fields)
+		       record
+		       (loop (cdr computed-fields)
+			     (if (assoc-ref record (caar computed-fields))
+				 record
+				 (cons (car computed-fields) record))))))
+	       (records db)))
+    
+    ;; Write records out in native format.
+    (native-write db target)))
