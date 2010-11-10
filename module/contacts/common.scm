@@ -205,7 +205,7 @@
     (set! (records db)
 	  (map (lambda (record)
 		 (let loop ((computed-fields
-			     (computed-native-fields db record))
+			     (compute-native-fields db record))
 			    (record record))
 		   (if (null? computed-fields)
 		       record
