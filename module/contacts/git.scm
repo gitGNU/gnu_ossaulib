@@ -1,6 +1,7 @@
 
 (define-module (contacts git)
   #:use-module (contacts common)
+  #:use-module (oop goops)
   #:use-module (utils)
   #:export (import->git
 	    git->export))
@@ -17,8 +18,11 @@
     (import-and-stage-contacts class source branch)
 
     ;; Commit them as an import.
-    (system/format "git commit -m ~s" (format #f "Import ~a" args))
-
+    (system/format "git commit -m ~s" (format #f
+					      "Import ~a ~a"
+					      (class-name class)
+					      source))
+    
     ;; Switch to master and cherry-pick the changes.
     (system/format "git checkout master")
     (system/format "git cherry-pick ~a" branch)))
