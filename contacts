@@ -20,7 +20,8 @@ Contacts - top level executable guile -*- scheme -*- script
 (use-modules (utils)
 	     (contacts common)
 	     (contacts bbdb)
-	     (contacts google))
+	     (contacts google)
+	     (contacts git))
 
 ;; Main program: dispatch to command table.
 (define (main . args)
@@ -72,39 +73,8 @@ Contacts - top level executable guile -*- scheme -*- script
   (let ((branch (car args))
 	(source (cadr args)))
 
-    ;; Initialize the Git repository if it doesn't already exist.
-    (ensure-repository)
-
-    (with-working-directory repository-dir
-
-      ;; Import and `git add' master format contact files.
-      (import-and-stage-contacts branch source)
-
-      ;; Commit them as an import.
-      (system "git commit -m ~s" (format #f "Import ~a" args))
-
-      ;; Switch to master and cherry-pick the changes.
-      (system "git checkout master")
-      (system "git cherry-pick ~a" branch))))
-
-(define (import-and-stage-contacts branch source)
-
-  ;; Try to switch to the named branch.
-  (or (zero? (system "git checkout ~a >/dev/null 2>&1" branch))
-      ;; Branch does not already exist, so must be created.
-      (begin
-	(system "git checkout ~a" root-tag-name)
-	(system "git checkout -b ~a" branch)))
-
-  ;; Delete all existing contacts.
-  (system "git rm -f _*")
-
-  ;; Read contacts from the source.  (Assuming for the moment that it
-  ;; is BBDB - FIXME.)
-  (import <bbdb> source)
-
-  ;; Stage the generated contacts.
-  (system "git add _*"))
+    ;; FIXME: BBDB assumption.
+    (import->git <bbdb> source branch)))
 
 (define (do-to args)
   ;; We need 2 arguments, a branch name and a file (or directory) name
@@ -115,62 +85,13 @@ Contacts - top level executable guile -*- scheme -*- script
 - and a file (or directory) name to export to. ~s" args))
   (let ((branch (car args))
 	(target (cadr args)))
-    ;; Initialize the Git repository if it doesn't already exist.
-    (ensure-repository)
-    (with-working-directory repository-dir
-      ;; Switch to the master branch.
-      (system "git checkout master")
-      ;; If the branch that we're exporting to doesn't already exist,
-      ;; create it here.
-      (system "git branch ~a" branch)
-      ;; Export to the target (assuming for the moment that it is a
-      ;; BBDB target).
-      (with-output-to-file target
-	(lambda ()
-	  (bbdb-to (getcwd))))
-      ;; Now reimport from the target.  The point of this is that the
-      ;; target format probably doesn't preserve every field that we
-      ;; have in the master format, and we don't want a future import
-      ;; of this target to look like a _deletion_ of those
-      ;; non-preserved fields.
-      (import-and-stage-contacts branch target)
-      ;; Commit them as an export and reimport.
-      (system "git commit -m ~s" "Export and reimport")
-      ;; Switch back to master.
-      (system "git checkout master"))))
+
+    ;; FIXME: BBDB assumption.
+    (git->export branch <bbdb> target)))
 
 (define command-table `(("from" ,do-from "<branch> <file-or-dir>")
 			("to" ,do-to "<branch> <file-or-dir>")))
 
-(define contacts-dir (in-vicinity (getenv "HOME") ".contacts"))
-(define repository-dir (in-vicinity contacts-dir "repository"))
-(define repository-stamp-file-name "CONTACTS")
-(define root-tag-name "___root___")
-
-(let ((primitive-system system))
-  (set! system (lambda (cmd . args)
-		 (primitive-system (apply format #f cmd args)))))
-
-(define (ensure-repository)
-  (ensure-directory contacts-dir)
-  (ensure-directory repository-dir)
-  (with-working-directory repository-dir
-    (or (file-exists? ".git")
-	(begin
-	  (system "git init")
-	  (with-output-to-file repository-stamp-file-name
-	    (lambda ()
-	      (format #t "Created on ~a\n"
-		      (strftime "%Y%m%d-%H%M" (localtime (current-time))))))
-	  (system "git add ~s" repository-stamp-file-name)
-	  (system "git commit -m ~s" "Repository created")
-	  (system "git tag ~a" root-tag-name)))))
-
-(define (ensure-directory dir)
-  (if (file-exists? dir)
-      (or (file-is-directory? dir)
-	  (error "`~a' already exists but is not a directory." dir))
-      (mkdir dir)))
 
 ;; Invoke `main'.
 (apply main (cdr (command-line)))
