@@ -148,7 +148,7 @@
 	       (records db)))
 
     ;; Write out this set of records in the standard contact format.
-    (map write-record (records db))))
+    (for-each write-record (records db))))
 
 ;; Write out a single record in the standard contact format.
 (define (write-record record)
