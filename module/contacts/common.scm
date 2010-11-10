@@ -11,8 +11,8 @@
 	    native-read
 	    native-write
 	    compute-standard-fields
-	    compute-native-fields)
-  #:replace (import))
+	    compute-native-fields
+	    import->dir))
 
 (define-generic native-read)
 (define-generic native-write)
@@ -91,9 +91,9 @@
 		    (acons field value output)
 		    output))))))
 
-;; Import contacts from some native format and write them out in the
-;; standard format.
-(define (import class source)
+;; Import contacts from some native format and write them out in
+;; standard format to a set of files in the current working directory.
+(define (import->dir class source)
 
   (define (stringify standard-fields)
     ;; Require the standard fields to consist only of list structure
