@@ -16,8 +16,8 @@
 ;;;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;;;; 02110-1301 USA
 
-(define-module (contacts bbdb)
-  #:use-module (contacts common)
+(define-module (ossau contacts bbdb)
+  #:use-module (ossau contacts common)
   #:use-module (language elisp parser)
   #:use-module (oop goops)
   #:export (<bbdb>))

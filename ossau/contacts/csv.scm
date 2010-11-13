@@ -16,7 +16,7 @@
 ;;;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;;;; 02110-1301 USA
 
-(define-module (contacts csv)
+(define-module (ossau contacts csv)
   #:use-module (ice-9 rdelim)
   #:use-module (ice-9 receive)
   #:use-module (ice-9 string-fun)

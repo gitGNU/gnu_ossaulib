@@ -16,10 +16,10 @@
 ;;;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;;;; 02110-1301 USA
 
-(define-module (contacts git)
-  #:use-module (contacts common)
+(define-module (ossau contacts git)
+  #:use-module (ossau contacts common)
   #:use-module (oop goops)
-  #:use-module (utils)
+  #:use-module (ossau utils)
   #:export (import->git
 	    git->export))
 

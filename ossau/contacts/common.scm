@@ -16,7 +16,7 @@
 ;;;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;;;; 02110-1301 USA
 
-(define-module (contacts common)
+(define-module (ossau contacts common)
   #:use-module (oop goops)
   #:use-module (ice-9 ftw)
   #:use-module (ice-9 rdelim)

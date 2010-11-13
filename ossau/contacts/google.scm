@@ -16,11 +16,11 @@
 ;;;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;;;; 02110-1301 USA
 
-(define-module (contacts google)
-  #:use-module (contacts common)
+(define-module (ossau contacts google)
+  #:use-module (ossau contacts common)
   #:use-module (ice-9 regex)
   #:use-module (oop goops)
-  #:use-module (contacts csv)
+  #:use-module (ossau contacts csv)
   #:export (<google>))
 
 (define-class <google> (<contacts>))

@@ -16,7 +16,7 @@
 ;;;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;;;; 02110-1301 USA
 
-(define-module (utils)
+(define-module (ossau utils)
   #:export (ensure-directory
 	    system/format)
   #:export-syntax (with-working-directory))
