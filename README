@@ -1,0 +1,37 @@
+
+	 A collection of Guile Scheme modules by Neil Jerram
+	 ===================================================
+
+During ten years or more of writing Scheme code, I've often found
+myself writing the same bits of utility code several times.  Also I've
+spent time wondering which "application" I should assign a piece of
+code to, and what to do about pieces of code that don't fit anywhere
+precise (how and whether to publish them, release them, and so on).
+I'm not sure that time was well spent.
+
+I now think this all stemmed from unhelpfully trying to organise my
+work into individual "applications" - which was never really necessary
+- and from not having a convenient way (before the DVCS era) of
+sharing and managing versions of the same code between different
+places.  These days we have DVCS, and I plan from now on to manage
+most of my Scheme code as part of a single overall collection.
+
+This approach also fits better with hackability and free software.
+For hackability, modules with nice programming APIs are more important
+than finished programs that provide a non-programming front end to
+those APIs.  Using the modules directly (from the Guile REPL) is often
+more convenient, when hacking, than using a GUI or a command line
+program.  The module-centric approach also promotes the possibilities
+of people - either oneself or others - combining existing modules in
+new ways.
+
+So that's what this project/package is: a place to collect and
+organise all my various fragments of Guile Scheme code, and a
+mechanism (specifically, Git) to facilitate using and evolving that
+code in different places.
+
+
+--
+Local variables:
+mode: text
+End:
