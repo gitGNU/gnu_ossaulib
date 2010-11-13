@@ -150,4 +150,28 @@ Technical details are as follows.
 
 [...to be continued...]
 
+\section{Mapping between standard fields and native fields}
+
+Assume an entry of each supported format can be mapped to an alist
+such that
+
+\begin{enumerate)
+
+\item it can be formulaically written out in the canonical contact
+  format
+
+\item it can be read back in from the canonical contact format, and
+  will produce an identical record in the source format
+
+\end{enumerate}
+
+Thus far, every format has a distinct and completely non-overlapping
+set of alist key names.  e.g. X-BBDB-..., X-GOOGLE-...
+
+Now we define how format-specific key values are mapped to common key
+values.
+
+Any format-specific key values that can be exactly reconstructed from
+common key values can then be discarded.
+
 \end{document}
