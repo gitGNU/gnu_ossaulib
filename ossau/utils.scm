@@ -41,5 +41,5 @@
     (lambda ()
       (proc (basename file)))))
 
-(define (system/format cmd . args)
-  (system (apply format #f cmd args)))
+(define (system/format string . args)
+  (system (apply format #f string args)))
