@@ -36,5 +36,10 @@
 	  (error "`~a' already exists but is not a directory." dir))
       (mkdir dir)))
 
+(define (with-dir-and-base-name file proc)
+  (with-working-directory (dirname file)
+    (lambda ()
+      (proc (basename file)))))
+
 (define (system/format cmd . args)
   (system (apply format #f cmd args)))
