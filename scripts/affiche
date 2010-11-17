@@ -1,0 +1,15 @@
+#! /usr/local/bin/guile -s
+!#
+                                             ; -*- scheme -*-
+(set! %load-path (cons "/home/neil/Guile/guile-ossau-0.7" %load-path))
+
+(use-modules (ice-9 readline))
+(activate-readline)
+
+(use-modules (ossau affiche))
+
+(display "Welcome to Guile/Affiche - using Guile ")
+(display (version))
+(newline)
+
+(affiche)
