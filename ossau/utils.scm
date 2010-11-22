@@ -21,6 +21,9 @@
 	    system/format)
   #:export-syntax (with-working-directory))
 
+(cond-expand (guile-2)
+	     (else (use-syntax (ice-9 syncase))))
+
 (define-syntax with-working-directory
   (syntax-rules ()
     ((with-working-directory dir body ...)
