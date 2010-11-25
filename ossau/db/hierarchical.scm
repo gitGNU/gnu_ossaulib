@@ -17,8 +17,10 @@
 ;;;; 02110-1301 USA
 
 (define-module (ossau db hierarchical)
+  #:use-module (ossau db generics)
   #:use-module (ossau db file scm-alist)
-  #:use-module (oop goops))
+  #:use-module (oop goops)
+  #:export (<db-hierarchical>))
 
 (define-class <db-hierarchical> ()
 
@@ -104,12 +106,9 @@
 
             (let* ((leaf-db-name (string-append
                                  (db-root-name db)
-                                 (make-shared-substring key
-                                                        0 
-                                                        hd-pos)
+                                 (substring key 0 hd-pos)
                                  (db-leaf-name db)))
-                   (leaf-db-key (make-shared-substring key
-                                                       (+ hd-pos 1)))
+                   (leaf-db-key (substring key (+ hd-pos 1)))
                    (leaf-db (assoc-ref (db-leaves db) leaf-db-name)))
 
               (if (not leaf-db)
@@ -141,10 +140,3 @@
       (begin
         (db-sync db)
         (set! (db-writes-since-last-sync db) 0))))
-
-(export <db-hierarchical>
-        db-open
-        db-close
-        db-sync
-        db-ref
-        db-set!)

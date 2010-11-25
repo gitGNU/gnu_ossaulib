@@ -17,8 +17,11 @@
 ;;;; 02110-1301 USA
 
 (define-module (ossau db file scm-alist)
+  #:use-module (ossau db generics)
   #:use-module (ossau filesys)
-  #:use-module (oop goops))
+  #:use-module (oop goops)
+  #:export (<db-file-scm-alist>
+	    db-keys))
 
 (define-class <db-file-scm-alist> ()
   (f #:init-value #f  #:accessor db-file-name)
@@ -105,11 +108,3 @@
   (set! (db-cache db)
         (assoc-set! (db-cache db) key value))
   (set! (db-modified? db) #t))
-
-(export <db-file-scm-alist>
-        db-open
-        db-close
-        db-sync
-        db-keys
-        db-ref
-        db-set!)
