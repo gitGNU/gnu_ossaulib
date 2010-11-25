@@ -40,7 +40,9 @@
 	;; a prefix of the requested URL path.  Work backwards from
 	;; the full URL, so that we check the most specific possible
 	;; path first.
-	(let loop ((code-file (string-append modlisp-root upath)))
+	(let loop ((code-file (string-append modlisp-root
+					     (substring upath
+							modlisp-prefix-length))))
 	  (cond ((string=? code-file modlisp-root)
 		 (error "No code file"))
 		((and (file-exists? code-file)
@@ -84,10 +86,13 @@
 	  ;; Cache this alist.
 	  (set! (cached-handlers code-file) handlers)))
     ;; Now call the handler for the relevant HTTP method.
+    (write `(handlers: ,handlers))
+    (newline) 
     ((assq-ref handlers http-method) M upath port)))
 
-(define port (string->number (cadr (program-arguments))))
-(define modlisp-root (caddr (program-arguments)))
+(define modlisp-port (string->number (cadr (program-arguments))))
+(define modlisp-prefix-length (string-length (caddr (program-arguments))))
+(define modlisp-root (cadddr (program-arguments)))
 
 (define modlisp-loop
   (make-big-dishing-loop #:need-input-port #t
@@ -98,4 +103,4 @@
 			 #:concurrency #:none
 			 #:socket-setup `((,SO_REUSEADDR . 1))))
 
-(modlisp-loop port)
+(modlisp-loop modlisp-port)
