@@ -1,0 +1,84 @@
+#!/usr/bin/env guile
+!#
+
+(load "setup-load-path.scm")
+
+(let ((log (open-output-file (in-vicinity (getenv "HOME") "modlisp.log"))))
+  (set-current-output-port log)
+  (set-current-error-port log))
+
+(use-modules (www server-utils big-dishing-loop)
+	     (www server-utils modlisp))
+
+(define modlisp-loop
+  (make-big-dishing-loop #:need-input-port #t
+			 #:style modlisp-hgrok
+			 #:method-handlers
+			 `((GET . ,(modlisp-dispatcher 'get))
+			   (POST . ,(modlisp-dispatcher 'post)))
+			 #:concurrency #:none
+			 #:socket-setup `((,SO_REUSEADDR . 1))))
+
+(define (modlisp-dispatcher http-method)
+  (lambda (M upath port)
+    ;; Log.
+    (write (cons http-method upath))
+    (newline)
+    (force-output)
+    ;; Protect against errors.
+    (catch #t
+      (lambda ()
+	;; Look under modlisp-root for a Scheme code file that matches
+	;; a prefix of the requested URL path.  Work backwards from
+	;; the full URL, so that we check the most specific possible
+	;; path first.
+	(let loop ((code-file (string-append modlisp-root upath)))
+	  (cond ((string=? code-file modlisp-root)
+		 (error "No code file"))
+		((and (file-exists? code-file)
+		      (not (file-is-directory? code-file)))
+		 ;; Found a code file, so run it.
+		 (run-code-file code-file
+				http-method
+				M
+				(substring upath
+					   (string-length code-file))
+				port))
+		(else (loop (dirname code-file))))))
+      ;; Error handling.
+      (lambda args
+	;; Log.
+	(write `(exception ,args))
+	(newline)
+	(force-output)
+	;; Send an HTTP error response.
+	(M #:set-reply-status 400 "Bad Request")
+	(M #:send-reply)))))
+
+(define cached-handlers (make-object-property))
+
+(define (run-code-file code-file http-method M upath port)
+  (let ((handlers (cached-handlers code-file)))
+    (or handlers
+	;; First time using this code file: make a module and load the
+	;; file into it.
+	(let ((m (make-module)))
+	  (beautify-user-module! m)
+	  (let ((old (set-current-module m)))
+	    (load code-file)
+	    (set-current-module old))
+	  ;; Construct an alist of handlers provided by this code
+	  ;; file.
+	  (set! handlers (map (lambda (method)
+				(cons method (and (module-bound? m method)
+						  (module-ref m method))))
+			      '(get post)))
+	  ;; Cache this alist.
+	  (set! (cached-handlers code-file) handlers)))
+    ;; Now call the handler for the relevant HTTP method.
+    ((assq-ref handlers http-method) M upath port)))
+
+(define port (string->number (cadr (program-arguments))))
+(define modlisp-root (caddr (program-arguments)))
+
+(modlisp-loop port)
