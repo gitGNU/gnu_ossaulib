@@ -27,15 +27,6 @@
 (use-modules (www server-utils big-dishing-loop)
 	     (www server-utils modlisp))
 
-(define modlisp-loop
-  (make-big-dishing-loop #:need-input-port #t
-			 #:style modlisp-hgrok
-			 #:method-handlers
-			 `((GET . ,(modlisp-dispatcher 'get))
-			   (POST . ,(modlisp-dispatcher 'post)))
-			 #:concurrency #:none
-			 #:socket-setup `((,SO_REUSEADDR . 1))))
-
 (define (modlisp-dispatcher http-method)
   (lambda (M upath port)
     ;; Log.
@@ -97,5 +88,14 @@
 
 (define port (string->number (cadr (program-arguments))))
 (define modlisp-root (caddr (program-arguments)))
+
+(define modlisp-loop
+  (make-big-dishing-loop #:need-input-port #t
+			 #:style modlisp-hgrok
+			 #:method-handlers
+			 `((GET . ,(modlisp-dispatcher 'get))
+			   (POST . ,(modlisp-dispatcher 'post)))
+			 #:concurrency #:none
+			 #:socket-setup `((,SO_REUSEADDR . 1))))
 
 (modlisp-loop port)
