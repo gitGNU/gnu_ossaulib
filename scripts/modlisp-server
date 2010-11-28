@@ -64,13 +64,15 @@
       (lambda args
 	(backtrace)))))
 
-(define cached-handlers (make-object-property))
+(define cached-mtime+handlers (make-object-property))
 
 (define (run-code-file code-file http-method M upath port)
-  (let ((handlers (cached-handlers code-file)))
-    (or handlers
-	;; First time using this code file: make a module and load the
-	;; file into it.
+  (let ((mtime+handlers (cached-mtime+handlers code-file))
+	(mtime (stat:mtime (stat code-file))))
+    (or (and mtime+handlers
+	     (= mtime (car mtime+handlers)))
+	;; First time using this code file, or the file has been
+	;; modified: make a module and load the file into it.
 	(let ((m (make-module)))
 	  (beautify-user-module! m)
 	  (let ((old (set-current-module m)))
@@ -78,16 +80,18 @@
 	    (set-current-module old))
 	  ;; Construct an alist of handlers provided by this code
 	  ;; file.
-	  (set! handlers (map (lambda (method)
-				(cons method (and (module-bound? m method)
-						  (module-ref m method))))
-			      '(get post)))
+	  (set! mtime+handlers
+		(cons mtime
+		      (map (lambda (method)
+			     (cons method (and (module-bound? m method)
+					       (module-ref m method))))
+			   '(get post))))
 	  ;; Cache this alist.
-	  (set! (cached-handlers code-file) handlers)))
+	  (set! (cached-mtime+handlers code-file) mtime+handlers)))
     ;; Now call the handler for the relevant HTTP method.
-    (write `(handlers: ,handlers))
+    (write `(mtime+handlers: ,mtime+handlers))
     (newline) 
-    ((assq-ref handlers http-method) M upath port)))
+    ((assq-ref (cdr mtime+handlers) http-method) M upath port)))
 
 (define modlisp-port #f)
 (define modlisp-prefix-length #f)
