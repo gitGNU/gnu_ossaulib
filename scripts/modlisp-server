@@ -40,9 +40,9 @@
 	;; a prefix of the requested URL path.  Work backwards from
 	;; the full URL, so that we check the most specific possible
 	;; path first.
-	(let loop ((code-file (string-append modlisp-root
-					     (substring upath
-							modlisp-prefix-length))))
+	(define modlisp-tree-path
+	  (string-append modlisp-root (substring upath modlisp-prefix-length)))
+	(let loop ((code-file modlisp-tree-path))
 	  (cond ((string=? code-file modlisp-root)
 		 (error "No code file"))
 		((and (file-exists? code-file)
@@ -51,8 +51,8 @@
 		 (run-code-file code-file
 				http-method
 				M
-				(substring code-file
-					   (string-length modlisp-root))
+				(substring modlisp-tree-path
+					   (string-length code-file))
 				port))
 		(else (loop (dirname code-file))))))
       ;; Error handling.
