@@ -63,7 +63,9 @@
 	(force-output)
 	;; Send an HTTP error response.
 	(M #:set-reply-status 400 "Bad Request")
-	(M #:send-reply)))))
+	(M #:send-reply))
+      (lambda args
+	(backtrace)))))
 
 (define cached-handlers (make-object-property))
 
