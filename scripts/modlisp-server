@@ -20,11 +20,8 @@
 
 (load "setup-load-path.scm")
 
-;;(let ((log (open-output-file (in-vicinity (getenv "HOME") "modlisp.log"))))
-;;  (set-current-output-port log)
-;;  (set-current-error-port log))
-
-(use-modules (www server-utils big-dishing-loop)
+(use-modules (ice-9 getopt-long)
+	     (www server-utils big-dishing-loop)
 	     (www server-utils modlisp))
 
 (define (modlisp-dispatcher http-method)
@@ -92,9 +89,9 @@
     (newline) 
     ((assq-ref handlers http-method) M upath port)))
 
-(define modlisp-port (string->number (cadr (program-arguments))))
-(define modlisp-prefix-length (string-length (caddr (program-arguments))))
-(define modlisp-root (cadddr (program-arguments)))
+(define modlisp-port #f)
+(define modlisp-prefix-length #f)
+(define modlisp-root #f)
 
 (define modlisp-loop
   (make-big-dishing-loop #:need-input-port #t
@@ -105,4 +102,25 @@
 			 #:concurrency #:none
 			 #:socket-setup `((,SO_REUSEADDR . 1))))
 
-(modlisp-loop modlisp-port)
+(let ((options
+       (getopt-long (command-line)
+		    '((port (single-char #\p) (value #t))
+		      (modlisp-prefix (single-char #\m) (value #t))
+		      (root (single-char #\r) (value #t) (required? #t))
+		      (logfile (single-char #\l) (value #t))))))
+
+  ;; Redirect output to a log file, if specified.
+  (let ((logfile (option-ref options 'logfile #f)))
+    (if logfile
+	(let ((log (open-output-file logfile)))
+	  (set-current-output-port log)
+	  (set-current-error-port log))))
+  
+  ;; Set up other parameters.
+  (set! modlisp-port (option-ref options 'port 3145))
+  (set! modlisp-prefix-length
+	(string-length (option-ref options 'modlisp-prefix "/lisp")))
+  (set! modlisp-root (option-ref options 'root #f))
+  
+  ;; Run the server loop.
+  (modlisp-loop modlisp-port))
