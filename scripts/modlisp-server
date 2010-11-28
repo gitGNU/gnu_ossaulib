@@ -20,9 +20,9 @@
 
 (load "setup-load-path.scm")
 
-(let ((log (open-output-file (in-vicinity (getenv "HOME") "modlisp.log"))))
-  (set-current-output-port log)
-  (set-current-error-port log))
+;;(let ((log (open-output-file (in-vicinity (getenv "HOME") "modlisp.log"))))
+;;  (set-current-output-port log)
+;;  (set-current-error-port log))
 
 (use-modules (www server-utils big-dishing-loop)
 	     (www server-utils modlisp))
