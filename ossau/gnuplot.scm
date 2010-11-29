@@ -17,27 +17,30 @@
 ;;;; 02110-1301 USA
 
 (define-module (ossau gnuplot)
+  #:use-module (ice-9 optargs)
   #:use-module (ice-9 popen)
   #:export (gnuplot))
 
-(define (gnuplot file-name plot-command)
+(define* (gnuplot file-name plot-command #:key key)
   (let ((pipe (open-output-pipe "gnuplot -")))
     (if (string? file-name)
 	(format pipe
 		"\
 set terminal png
 set output '~a'
-unset key
+~a
 ~a
 quit
 "
 		file-name
+		(if key "" "unset key")
 		plot-command)
 	(format pipe
 		"\
-unset key
+~a
 ~a
 "
+		(if key "" "unset key")
 		plot-command))
     (if (string? file-name)
 	(close-pipe pipe))))
