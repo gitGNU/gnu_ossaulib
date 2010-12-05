@@ -50,7 +50,8 @@
 				M
 				(substring modlisp-tree-path
 					   (string-length code-file))
-				port))
+				port)
+		 (M #:send-reply))
 		(else (loop (dirname code-file))))))
       ;; Error handling.
       (lambda args

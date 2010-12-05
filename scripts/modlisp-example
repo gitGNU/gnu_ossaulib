@@ -33,5 +33,4 @@ You asked for URL ~s
 </body>
 </html>
 "
-			   upath))
-  (M #:send-reply))
+			   upath)))
