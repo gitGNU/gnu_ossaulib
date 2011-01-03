@@ -72,7 +72,8 @@
     ;; Read BBDB data in its native vector format.
     (let ((port (open-bbdb-file)))
       (let loop ((data '()) (x (convert-nil (read-elisp port))))
-	(if (eq? x '*eoi*)
+	(if (or (eof-object? x)
+		(eq? x '*eoi*))
 	    (begin
 	      (close-port port)
 	      (reverse! data))
