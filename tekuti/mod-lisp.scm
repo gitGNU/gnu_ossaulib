@@ -136,12 +136,11 @@
       (begin
         (display name port) (newline port)
         (display val port) (newline port))
-      (let ((decl (lookup-header-decl name)))
-        (if (not decl)
-            (error "Unknown header" name)
-            (begin
-              (display (header-decl-name decl) port) (newline port)
-              ((header-decl-writer decl) val port) (newline port))))))
+      (if (not (known-header? name))
+	  (error "Unknown header" name)
+	  (begin
+	    (display (header->string name) port) (newline port)
+	    ((header-writer name) val port) (newline port)))))
 
 (define (write-response-line/mod-lisp code phrase port)
   (write-header/mod-lisp "Status"
