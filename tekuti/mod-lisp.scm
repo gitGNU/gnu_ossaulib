@@ -249,7 +249,7 @@
                  (let ((req (read-request/mod-lisp port)))
                    (values port
                            req
-                           (read-request-body/latin-1 req))))
+                           (read-request-body req))))
                (lambda (k . args)
                  (false-if-exception (close-port port)))))))))))))
 
@@ -259,9 +259,9 @@
     (cond
      ((not body))                       ; pass
      ((string? body)
-      (write-response-body/latin-1 response body))
+      (write-response-body response (string->utf8 body)))
      ((bytevector? body)
-      (write-response-body/bytevector response body))
+      (write-response-body response body))
      (else
       (error "Expected a string or bytevector for body" body)))
     (close-port (response-port response))))
