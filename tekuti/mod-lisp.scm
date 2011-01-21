@@ -112,9 +112,10 @@
                     (acons (car sym-and-parser)
                            ((cdr sym-and-parser) v)
                            meta))
-                (call-with-values (lambda () (parse-header k v))
-                  (lambda (k v)
-                    (lp (acons k v headers) meta)))))))))
+		(lp (acons (string->header k)
+			   (parse-header (string->header k) v)
+			   headers)
+		    meta)))))))
 
 (define (read-request/mod-lisp port)
   ;; See the note in (web request) regarding chars, bytes, and strings
