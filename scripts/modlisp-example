@@ -19,6 +19,9 @@
 
 ;; An example code file for modlisp-server.
 
+(use-modules (web uri)
+	     (web request))
+
 (define (get M upath port)
   (M #:set-reply-status:success)
   (M #:add-header #:Content-Type "text/html")
@@ -34,3 +37,20 @@ You asked for URL ~s
 </html>
 "
 			   upath)))
+
+;; Equivalent (web ...) version.
+(define (GET relpath request body)
+  (values '((content-type . (text/html)))
+	  (format #f "\
+<html>
+<head>
+<title>modlisp-example</title>
+</head>
+<body>
+<h2>Seems to be working...</h2>
+You asked for URL ~s (relpath ~s)
+</body>
+</html>
+"
+		  (uri-path (request-uri request))
+		  relpath)))

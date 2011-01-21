@@ -1,0 +1,130 @@
+#!/usr/bin/env guile
+!#
+;;;;
+;;;; 	Copyright (C) 2010 Neil Jerram.
+;;;; 
+;;;; This library is free software; you can redistribute it and/or
+;;;; modify it under the terms of the GNU General Public License as
+;;;; published by the Free Software Foundation; either version 3 of
+;;;; the License, or (at your option) any later version.
+;;;; 
+;;;; This library is distributed in the hope that it will be useful,
+;;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;;;; General Public License for more details.
+;;;; 
+;;;; You should have received a copy of the GNU General Public License
+;;;; along with this library; if not, write to the Free Software
+;;;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+;;;; 02110-1301 USA
+
+(include "setup-load-path.scm")
+
+(use-modules (ice-9 getopt-long)
+	     (web request)
+	     (web response)
+	     (web server)
+	     (web uri)
+	     (tekuti mod-lisp))
+
+(define (modlisp-dispatcher request body)
+  (let ((http-method (request-method request))
+	(upath (uri-path (request-uri request))))
+    ;; Log.
+    (write (cons http-method upath))
+    (newline)
+    (force-output)
+    ;; Protect against errors.
+    (catch #t
+      (lambda ()
+	;; Look under modlisp-root for a Scheme code file that
+	;; matches a prefix of the requested URL path.  Work
+	;; backwards from the full URL, so that we check the most
+	;; specific possible path first.
+	(define modlisp-tree-path
+	  (string-append modlisp-root
+			 (substring upath modlisp-prefix-length)))
+	(let loop ((code-file modlisp-tree-path))
+	  (cond ((string=? code-file modlisp-root)
+		 (error "No code file"))
+		((and (file-exists? code-file)
+		      (not (file-is-directory? code-file)))
+		 ;; Found a code file, so run it.
+		 (run-code-file code-file
+				http-method
+				(substring modlisp-tree-path
+					   (string-length code-file))
+				request
+				body))
+		(else (loop (dirname code-file))))))
+      ;; Error handling.
+      (lambda args
+	;; Log.
+	(write `(exception ,args))
+	(newline)
+	(force-output)
+	;; Send an HTTP error response.
+	(values (build-response #:code 400)
+		(format #f
+			"Bad request: ~a"
+			(uri->string (request-uri request)))))
+      (lambda args
+	(backtrace)))))
+
+(define cached-mtime+handlers (make-object-property))
+
+(define (run-code-file code-file http-method relpath request body)
+  (let ((mtime+handlers (cached-mtime+handlers code-file))
+	(mtime (stat:mtime (stat code-file))))
+    (or (and mtime+handlers
+	     (= mtime (car mtime+handlers)))
+	;; First time using this code file, or the file has been
+	;; modified: make a module and load the file into it.
+	(let ((m (make-module)))
+	  (beautify-user-module! m)
+	  (let ((old (set-current-module m)))
+	    (load code-file)
+	    (set-current-module old))
+	  ;; Construct an alist of handlers provided by this code
+	  ;; file.
+	  (set! mtime+handlers
+		(cons mtime
+		      (map (lambda (method)
+			     (cons method (and (module-bound? m method)
+					       (module-ref m method))))
+			   '(GET POST))))
+	  ;; Cache this alist.
+	  (set! (cached-mtime+handlers code-file) mtime+handlers)))
+    ;; Now call the handler for the relevant HTTP method.
+    (write `(mtime+handlers: ,mtime+handlers))
+    (newline) 
+    ((assq-ref (cdr mtime+handlers) http-method) relpath request body)))
+
+(define modlisp-port #f)
+(define modlisp-prefix-length #f)
+(define modlisp-root #f)
+
+(let ((options
+       (getopt-long (command-line)
+		    '((port (single-char #\p) (value #t))
+		      (modlisp-prefix (single-char #\m) (value #t))
+		      (root (single-char #\r) (value #t) (required? #t))
+		      (logfile (single-char #\l) (value #t))))))
+
+  ;; Redirect output to a log file, if specified.
+  (let ((logfile (option-ref options 'logfile #f)))
+    (if logfile
+	(let ((log (open-output-file logfile)))
+	  (set-current-output-port log)
+	  (set-current-error-port log))))
+  
+  ;; Set up other parameters.
+  (set! modlisp-port (option-ref options 'port 3145))
+  (set! modlisp-prefix-length
+	(string-length (option-ref options 'modlisp-prefix "/lisp")))
+  (set! modlisp-root (option-ref options 'root #f))
+  
+  ;; Run the server loop.
+  (run-server modlisp-dispatcher
+	      mod-lisp
+	      `(#:port ,modlisp-port)))
