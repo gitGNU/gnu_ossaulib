@@ -2,3 +2,9 @@
 *.dvi
 *.log
 test
+*.patch
+test-*.gp
+test-*.png
+test-*.txt
+table1*
+table2*
