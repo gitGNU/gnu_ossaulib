@@ -128,7 +128,8 @@
        #:version (assq-ref meta 'server-protocol)
        #:headers headers
        #:meta meta
-       #:port port))))
+       #:port port
+       #:validate-headers? #f))))
 
 (define (write-header/mod-lisp name val port)
   (if (string? name)
