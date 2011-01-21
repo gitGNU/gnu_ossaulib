@@ -33,7 +33,8 @@
   #:use-module (web http)
   #:use-module (web request)
   #:use-module (web response)
-  #:use-module (web server))
+  #:use-module (web server)
+  #:export (mod-lisp))
 
 
 ;;; FIXME: ignore SIGPIPE, otherwise apache dying will kill us
