@@ -123,9 +123,8 @@
   (set-port-encoding! port "ISO-8859-1")
   (call-with-values (lambda () (read-headers/mod-lisp port))
     (lambda (headers meta)
-      (build-request
+      (build-request (assq-ref meta 'url)
        #:method (assq-ref meta 'method)
-       #:uri (assq-ref meta 'url)
        #:version (assq-ref meta 'server-protocol)
        #:headers headers
        #:meta meta
