@@ -54,7 +54,7 @@
 	(system/format "git checkout -b ~a" branch)))
 
   ;; Delete all existing contacts.
-  (system/format "git rm -f _*")
+  (system/format "git rm -f --quiet --ignore-unmatch _*")
 
   ;; Read contacts from the source.
   (import->dir class source)
