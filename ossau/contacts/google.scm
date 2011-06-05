@@ -49,9 +49,12 @@
   (cons* (cons "FIRST-NAMES"
 	       (let ((given (assoc-ref record "X-GOOGLE-Given_Name"))
 		     (additional (assoc-ref record "X-GOOGLE-Additional_Name")))
-		 (if (zero? (string-length additional))
-		     given
-		     (string-append given " " additional))))
+		 (cond ((and given additional)
+			(string-append given " " additional))
+		       
+		       (given given)
+		       (additional additional)
+		       (else ""))))
 	 (map-named-fields record
 			   '(("LAST-NAME" . "X-GOOGLE-Family_Name")))))
 
