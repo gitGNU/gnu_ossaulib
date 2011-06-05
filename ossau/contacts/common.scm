@@ -198,8 +198,8 @@
 
   ;; Compute contact file name from FIRST-NAMES and LAST-NAME.
   (let ((file-name (format #f "_~a_~a"
-			   (assoc-ref record "FIRST-NAMES")
-			   (assoc-ref record "LAST-NAME"))))
+			   (or (assoc-ref record "FIRST-NAMES") "")
+			   (or (assoc-ref record "LAST-NAME") ""))))
 
     ;; Ensure the file name is unique.
     (while (file-exists? file-name)
