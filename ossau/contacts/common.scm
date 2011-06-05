@@ -86,10 +86,11 @@
   (records #:accessor records #:init-value '()))
 
 (define (map-named-fields record name-map)
-  (map (lambda (spec)
-	 (cons (car spec)
-	       (assoc-ref record (cdr spec))))
-       name-map))
+  (filter cdr
+	  (map (lambda (spec)
+		 (cons (car spec)
+		       (assoc-ref record (cdr spec))))
+	       name-map)))
 
 (define standard-fields '("FIRST-NAMES"
 			  "LAST-NAME"
