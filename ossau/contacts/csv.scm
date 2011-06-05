@@ -86,6 +86,11 @@
 			   (set! value
 				 (substring value 0 (1- (string-length value)))))
 		       (loop data
-			     (acons (car headers-to-read) value entry)
+			     ;; Treat empty CSV fields as "no
+			     ;; information", and don't return them in
+			     ;; the alist at all.
+			     (if (zero? (string-length value))
+				 entry
+				 (acons (car headers-to-read) value entry))
 			     (cdr headers-to-read)
 			     rest)))))))))))
