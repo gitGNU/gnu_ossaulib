@@ -79,6 +79,12 @@
 					      #\,)
 					  rest
 		     (lambda (value rest)
+		       ;; Google CSV files are DOS format and so have
+		       ;; a carriage return character before the
+		       ;; newline.  Trim this off.
+		       (if (string-suffix? "\r" value)
+			   (set! value
+				 (substring value 0 (1- (string-length value)))))
 		       (loop data
 			     (acons (car headers-to-read) value entry)
 			     (cdr headers-to-read)
