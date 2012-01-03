@@ -221,7 +221,17 @@
 
     ;; Read standard format contacts from the current directory.
     (set! (records db)
-	  (fold-contacts "." '() cons))
+	  ;; Use reverse! here to make import->dir and dir->export
+	  ;; symmetric for sets of contacts with the same name.  When
+	  ;; there are multiple contacts with the same name, e.g. "X
+	  ;; Y": (1) they will be written out in filenames "_X_Y",
+	  ;; "_X_Y_", "_X_Y__", and so on; (2) nftw will traverse them
+	  ;; in that same order - i.e. a name with an extra underscore
+	  ;; will come after a name without; (3) therefore the
+	  ;; following use of cons will construct a list where those
+	  ;; contacts are in reversed order; (4) calling reverse! will
+	  ;; correct that.
+	  (reverse! (fold-contacts "." '() cons)))
 
     ;; Compute additional native fields from the standard fields.
     (set! (records db)
