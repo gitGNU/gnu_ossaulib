@@ -42,14 +42,18 @@
        (error "Assertion failed:" ',condition)))
 
 (define (fold-contacts dir init proc)
-  (nftw dir
-	(lambda (filename statinfo flag base level)
-	  (and (eq? flag 'regular)
-	       (= level 1)
-	       (char=? (string-ref (basename filename) 0) #\_)
-	       (set! init (proc (with-input-from-file filename read-contact)
-				init)))
-	  #t))
+  (let ((filenames '()))
+    (nftw dir
+	  (lambda (filename statinfo flag base level)
+	    (and (eq? flag 'regular)
+		 (= level 1)
+		 (char=? (string-ref (basename filename) 0) #\_)
+		 (set! filenames (cons filename filenames)))
+	    #t))
+    (for-each (lambda (filename)
+		(set! init (proc (with-input-from-file filename read-contact)
+				 init)))
+	      (sort filenames string<?)))
   init)
 
 (define (read-contact)
