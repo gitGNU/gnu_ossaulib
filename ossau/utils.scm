@@ -41,8 +41,7 @@
 
 (define (with-dir-and-base-name file proc)
   (with-working-directory (dirname file)
-    (lambda ()
-      (proc (basename file)))))
+    (proc (basename file))))
 
 (define (system/format string . args)
   (system (apply format #f string args)))
