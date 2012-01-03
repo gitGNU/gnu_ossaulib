@@ -21,7 +21,11 @@
   #:use-module (ice-9 ftw)
   #:use-module (ice-9 rdelim)
   #:use-module (ice-9 regex)
+  #:use-module (srfi srfi-1)
+  #:use-module (ice-9 receive)
+  #:use-module (ice-9 string-fun)
   #:export (fold-contacts
+	    read-contact
 	    <contacts>
 	    records
 	    map-named-fields
@@ -57,34 +61,71 @@
   init)
 
 (define (read-contact)
+  (combine-same-keys (read-contact-1)))
+
+(define (combine-same-keys contact)
+  ;; Given a contact as read by `read-contact-1', look for alist
+  ;; entries with the same FIELD-KEY and combine them into a single
+  ;; entry.  If there was already only a single entry in the original
+  ;; alist, with FIELD-IDENTIFIER "", the combined entry is just
+  ;; (FIELD-KEY . FIELD-VALUE).  Otherwise the combined entry is
+  ;; (FIELD-KEY (FIELD-IDENTIFIER-1 . FIELD-VALUE-1) ...).
+  (if (null? contact)
+      contact
+      (let ((first (car contact)))
+	(receive (same-key-list other-key-list)
+	    (partition (lambda (entry)
+			 (string=? (caar entry) (caar first)))
+		       (cdr contact))
+	  (acons (caar first)
+		 (if (and (null? same-key-list)
+			  (string=? (cdar first) ""))
+		     (cdr first)
+		     (map (lambda (same-key-entry)
+			    (cons (cdar same-key-entry)
+				  (cdr same-key-entry)))
+			  (cons first same-key-list)))
+		 (combine-same-keys other-key-list))))))
+
+(define (read-contact-1)
+  ;; Read a contact file, in master format, and return it as an alist
+  ;;  like (((FIELD-KEY . FIELD-IDENTIFIER) . FIELD-VALUE) ...).
+  ;;  FIELD-KEY is a string such as "LAST-NAME", "PHONE" or
+  ;;  "X-BBDB-NOTES".  FIELD-IDENTIFIER is a string, such as "Work",
+  ;;  "mobile" or "parents' cottage", that differentiates between
+  ;;  fields that can have multiple values - like PHONE and ADDRESS.
+  ;;  FIELD-VALUE is a string that is the value of the field.
   (let loop ((contact '())
 	     (field-key #f)
 	     (field-value #f))
     (let ((line (read-line)))
-      (if (eof-object? line)
-	  (reverse! (acons field-key (reverse! field-value) contact))
-	  (begin
-	    ;; Format does not allow empty lines.
-	    (assert (not (zero? (string-length line))))
+      (cond ((eof-object? line)
+	     (reverse! (acons field-key field-value contact)))
+	    ((zero? (string-length line))
+	     (loop contact field-key field-value))
 	    ;; Check for leading space.
-	    (if (char=? (string-ref line 0) #\space)
-		(begin
-		  ;; Start or continuation of a value.
-		  (assert field-key)
-		  (assert field-value)
-		  (loop contact
-			field-key
-			(cons (substring line 1) field-value)))
-		(begin
-		  ;; A new field, that may or may not have an
-		  ;; identifier.
-		  (let ((match-data (string-match "^([^ ]+) ?([^ ]*.*)$" line)))
-		    (assert match-data)
-		    (loop (if field-key
-			      (acons field-key (reverse! field-value) contact)
-			      contact)
-			  (string->symbol (match:substring match-data 1))
-			  (list (match:substring match-data 2)))))))))))
+	    ((char=? (string-ref line 0) #\space)
+	     ;; Start or continuation of a value.
+	     (assert field-key)
+	     (loop contact
+		   field-key
+		   (if field-value
+		       (string-append field-value "\n" (substring line 1))
+		       (substring line 1))))
+	    (else
+	     ;; A new field, that may or may not have an
+	     ;; identifier.
+	     (let ((match-data (string-match "^([^ ]+) ?([^ ]*.*)$" line)))
+	       (assert match-data)
+	       (let ((new-key (match:substring match-data 1)))
+		 (loop (if field-key
+			   (acons field-key field-value contact)
+			   contact)
+		       (cons new-key
+			     (match:substring match-data 2))
+		       (if (string=? (substring new-key 0 2) "X-")
+			   (read)
+			   #f)))))))))
 
 (define-class <contacts> ()
   (records #:accessor records #:init-value '()))
