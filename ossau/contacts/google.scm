@@ -242,7 +242,9 @@
 					      (google-key->native key))
 				   ""))
 		  (set! first #f))
-		keys)))
+		keys))
+    (display "\r")
+    (newline))
 
   ;; Write the keys.
   (write-record (map cons keys keys))
