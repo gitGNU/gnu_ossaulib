@@ -221,25 +221,25 @@
   (define (write-field field)
     (let ((name (car field))
 	  (value (cdr field)))
-      (if (string=? name "PHONE") ;; Probably add `or "ADDRESSES"'
-				  ;; here in future.
-	  ;; The value is a list of values with subkeys.
-	  (map (lambda (subfield)
-		 (let ((subname (car subfield))
-		       (subvalue (cadr subfield)))
-		   ;; Write out the field name and subname.
-		   (format #t "~a ~a~%" name subname)
-		   ;; Write out the subvalue.
-		   (format #t " ~a~%" subvalue)))
-	       value)
-	  ;; The value is a single value.
-	  (begin
-	    ;; Write out the name.
-	    (format #t "~a~%" name)
-	    ;; Write out the value.
-	    (if (string=? (substring name 0 2) "X-")
-		(format #t " ~s~%" value)
-		(format #t " ~a~%" value))))))
+      (cond ((string=? (substring name 0 2) "X-")
+	     (format #t "~a~%" name)
+	     (format #t " ~s~%" value))
+	    ((list? value)
+	     (for-each (lambda (subfield)
+			 (let ((subname (car subfield))
+			       (subvalue (cdr subfield)))
+			   ;; Write out the field name and subname.
+			   (format #t "~a ~a~%" name subname)
+			   ;; Write out the subvalue.
+			   (format #t " ~a~%" subvalue)))
+		       value))
+	    (else
+	     (format #t "~a~%" name)
+	     (for-each (lambda (line)
+			 (format #t " ~a~%" line))
+		       (separate-fields-discarding-char #\newline
+							value
+							list))))))
 
   ;; Compute contact file name from FIRST-NAMES and LAST-NAME.
   (let ((file-name (format #f "_~a_~a"
