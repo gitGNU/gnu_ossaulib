@@ -245,6 +245,10 @@
 		keys))
     (display "\r")
     (newline))
+  
+  (with-output-to-file destination
+    (lambda ()
+      
 
       ;; Loop through records.
       (for-each write-record (sort (records db)
