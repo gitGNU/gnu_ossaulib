@@ -46,18 +46,20 @@
 
 ;; Given a Google record, compute standard contact fields from it.
 (define-method (compute-standard-fields (db <google>) record)
-  (cons* (cons "FIRST-NAMES"
-	       (let ((given (assoc-ref record "X-GOOGLE-Given_Name"))
-		     (additional (assoc-ref record "X-GOOGLE-Additional_Name")))
-		 (cond ((and given additional)
-			(string-append given " " additional))
-		       
-		       (given given)
-		       (additional additional)
-		       (else ""))))
-	 (map-named-fields record
-			   '(("LAST-NAME" . "X-GOOGLE-Family_Name")))))
+  `(("FIRST-NAMES" . ,(let ((given (assoc-ref record "X-GOOGLE-Given_Name"))
+			    (additional (assoc-ref record "X-GOOGLE-Additional_Name")))
+			(cond ((and given additional)
+			       (string-append given " " additional))
+			      (given given)
+			      (additional additional)
+			      (else ""))))
+    ,@(google->native-phone-fields record)
+    ,@(google->native-email-fields record)
+    ,@(map-named-fields record
+			'(("LAST-NAME" . "X-GOOGLE-Family_Name")
+			  ("NOTES" . "X-GOOGLE-Notes")))))
 
+    
 (define keys '("Name"
 	       "Given Name"
 	       "Additional Name"
@@ -129,7 +131,93 @@
 ;; Given a set of standard contact fields, compute corresponding
 ;; native Google fields.
 (define-method (compute-native-fields (db <google>) record)
-  '())
+  `(("X-GOOGLE-Name" . ,(let ((first (assoc-ref record "FIRST-NAMES"))
+			      (last (assoc-ref record "LAST-NAME")))
+			  (cond ((and first last)
+				 (string-append first
+						" "
+						last))
+				((or first last) => identity) 
+				(else ""))))
+    ,@(native->google-email-fields record)
+    ,@(native->google-phone-fields record)
+    ,@(map-named-fields record
+			'(("X-GOOGLE-Given_Name" . "FIRST-NAMES")
+			  ("X-GOOGLE-Family_Name" . "LAST-NAME")
+			  ("X-GOOGLE-Notes" . "NOTES")))))
+
+(define (field-map record indices combiner . key-formats)
+  (apply map
+	 combiner
+	 (map (lambda (key-format)
+		(map (lambda (key)
+		       (assoc-ref record key))
+		     (map google-key->native (map (lambda (index)
+						    (format #f
+							    key-format
+							    index))
+						  indices))))
+	      key-formats)))
+
+(define (google->native-email-fields record)
+  (let ((emails (filter! (lambda (entry)
+			   (and (car entry) (cdr entry)))
+			 (field-map record
+				    '(1 2 3)
+				    cons
+				    "E-mail ~a - Type"
+				    "E-mail ~a - Value"))))
+    (if (null? emails)
+	'()
+	`(("EMAIL" ,@emails)))))
+
+(define (google->native-phone-fields record)
+  (let ((phones (filter! (lambda (entry)
+			   (and (car entry) (cdr entry)))
+			 (field-map record
+				    '(1 2 3 4)
+				    cons
+				    "Phone ~a - Type"
+				    "Phone ~a - Value"))))
+    (if (null? phones)
+	'()
+	`(("PHONE" ,@phones)))))
+
+(define (native->google-email-fields record)
+  (let ((emails (assoc-ref record "EMAIL")))
+    (let loop ((emails (or emails '()))
+	       (index 1)
+	       (google-fields '()))
+      (if (or (null? emails)
+	      (> index 3))
+	  google-fields
+	  (loop (cdr emails)
+		(1+ index)
+		(acons (google-key->native (format #f "E-mail ~a - Type" index))
+		       (caar emails)
+		       (acons (google-key->native (format #f
+							  "E-mail ~a - Value"
+							  index))
+			      (cdar emails)
+			      google-fields)))))))
+
+(define (native->google-phone-fields record)
+  (let ((phones (assoc-ref record "PHONE")))
+    (let loop ((phones (or phones '()))
+	       (index 1)
+	       (google-fields '()))
+      (if (or (null? phones)
+	      (> index 4))
+	  google-fields
+	  (loop (cdr phones)
+		(1+ index)
+		(acons (google-key->native (format #f "Phone ~a - Type" index))
+		       (caar phones)
+		       (acons (google-key->native (format #f
+							  "Phone ~a - Value"
+							  index))
+			      (cdar phones)
+			      google-fields)))))))
 
 ;; Write out a database in Google CSV format.
 (define-method (native-write (db <google>) destination)
