@@ -246,8 +246,11 @@
     (display "\r")
     (newline))
 
+      ;; Loop through records.
+      (for-each write-record (sort (records db)
+				   (lambda (x y)
+				     (string<? (string-downcase (assoc-ref x "X-GOOGLE-Name"))
+					       (string-downcase (assoc-ref y "X-GOOGLE-Name")))))))))
   ;; Write the keys.
   (write-record (map cons keys keys))
 
-  ;; Loop through records.
-  (for-each write-record (records db)))
