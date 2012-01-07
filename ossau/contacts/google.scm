@@ -223,8 +223,13 @@
 (define-method (native-write (db <google>) destination)
 
   (define (write-field field)
-    (if (string-contains field "\n")
-	(write field)
+    (if (or (string-contains field "\n")
+	    (string-contains field ","))
+	(begin
+	  (display "\"")
+	  (display field)
+	  (display "\""))
+	; (write field)
 	(display field)))
   
   (define (write-record record)
