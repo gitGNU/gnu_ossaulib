@@ -19,7 +19,8 @@
 ;;;; 02110-1301 USA
                                              ; -*- scheme -*-
 
-(load "setup-load-path.scm")
+(cond-expand (guile-2 (include "setup-load-path.scm"))
+             (else (load "setup-load-path.scm")))
 
 (use-modules (ice-9 readline))
 (activate-readline)
