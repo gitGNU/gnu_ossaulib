@@ -33,10 +33,12 @@
 
 
 ;; Compatibility
-(if (and (defined? 'call-with-readline-completion-function)
-	 (not (defined? 'with-readline-completion-function)))
-    (define with-readline-completion-function
-      call-with-readline-completion-function))
+(cond-expand (guile-2 'not-needed)
+	     (else
+	      (if (and (defined? 'call-with-readline-completion-function)
+		       (not (defined? 'with-readline-completion-function)))
+		  (define with-readline-completion-function
+		    call-with-readline-completion-function))))
 
 ;; run-command-loop PROMPT [#:commands COMMANDS]
 ;;                         [#:command-module COMMAND-MODULE]
