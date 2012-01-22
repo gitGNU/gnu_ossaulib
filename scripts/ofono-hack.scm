@@ -7,7 +7,8 @@
 (use-modules (glib dbus)
 	     (glib variant)
 	     (system foreign)
-	     (rnrs bytevectors))
+	     (rnrs bytevectors)
+	     (e17 edje))
 
 (define manager-proxy
   (g_dbus_proxy_new_for_bus_sync G_BUS_TYPE_SYSTEM
@@ -81,3 +82,5 @@
 			  %null-pointer))
 
 (print-variant return-parms)
+
+(run-edje "phone.edj")
