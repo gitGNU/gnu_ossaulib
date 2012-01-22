@@ -5,6 +5,7 @@
              (else (load "setup-load-path.scm")))
 
 (use-modules (glib dbus)
+	     (glib variant)
 	     (system foreign)
 	     (rnrs bytevectors))
 
