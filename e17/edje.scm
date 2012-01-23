@@ -85,6 +85,26 @@
 			    '*
 			    )))
 
+(define edje_object_signal_callback_add
+  (pointer->procedure void
+		      (dynamic-func "edje_object_signal_callback_add" edje)
+		      (list '*		; Evas_Object
+			    '*		; signal name
+			    '*		; source name
+			    '*		; Edje_Signal_Cb func
+			    '*		; closure data
+			    )))
+
+
+;; void(* Edje_Signal_Cb)(void *data, Evas_Object *obj, const char *emission, const char *source)
+(define (Edje_Signal_Cb proc)
+  (procedure->pointer void
+		      (lambda (data obj emission source)
+			(proc obj
+			      (pointer->string emission)
+			      (pointer->string source)))
+		      (list '* '* '* '*)))
+
 (define (run-edje edj-file)
   (dynamic-call "eina_init" eina)
   (dynamic-call "evas_init" evas)
@@ -95,8 +115,13 @@
   (let* ((window (ecore_evas_software_x11_new %null-pointer 0 0 0 480 580))
 	 (canvas (ecore_evas_get window))
 	 (edje (create-my-group canvas edj-file)))
-    (write window)
-    (newline)
+    (edje_object_signal_callback_add edje
+				     (string->pointer "mouse,down,*")
+				     (string->pointer "one")
+				     (Edje_Signal_Cb (lambda args
+						       (write args)
+						       (newline)))
+				     %null-pointer)
     (ecore_evas_show window)
     (dynamic-call "ecore_main_loop_begin" ecore)
     (evas_object_del edje)
