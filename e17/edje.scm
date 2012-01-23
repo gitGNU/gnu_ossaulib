@@ -92,7 +92,7 @@
   (dynamic-call "ecore_evas_init" ecore_evas)
   (dynamic-call "edje_init" edje)
 
-  (let* ((window (ecore_evas_software_x11_new %null-pointer 0 0 0 480 640))
+  (let* ((window (ecore_evas_software_x11_new %null-pointer 0 0 0 480 580))
 	 (canvas (ecore_evas_get window))
 	 (edje (create-my-group canvas edj-file)))
     (write window)
@@ -109,6 +109,6 @@
 				 (string->pointer "my_group")))
     (newline)
     (evas_object_move edje 0 0)
-    (evas_object_resize edje 480 640)
+    (evas_object_resize edje 480 580)
     (evas_object_show edje)  
     edje))
