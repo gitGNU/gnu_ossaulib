@@ -1,4 +1,26 @@
 // compile: edje_cc edje_example.edc
+
+images {
+ image: "star.png" COMP;
+ image: "one.png" COMP;
+ image: "two.png" COMP;
+ image: "three.png" COMP;
+ image: "four.png" COMP;
+ image: "five.png" COMP;
+ image: "six.png" COMP;
+ image: "seven.png" COMP;
+ image: "eight.png" COMP;
+ image: "nine.png" COMP;
+ image: "zero.png" COMP;
+ image: "hash.png" COMP;
+ image: "quieter.png" COMP;
+ image: "louder.png" COMP;
+ image: "redphone.png" COMP;
+ image: "greenphone.png" COMP;
+ image: "speaker.png" COMP;
+ image: "current.png" COMP;
+}
+
 collections {
    group {
       name: "my_group"; // must be the same as in edje_example.c
@@ -26,6 +48,175 @@ collections {
                }
             }
          }
+
+	 part {
+	 name: "current";
+	 type: IMAGE;
+	   description {
+	   state: "default" 0.0;
+	   fixed: 0 0;
+	   min: 339 325;
+	   max: 339 325;
+	     rel1 {
+	     relative: 0.0 0.0;
+	     offset: 70 92;
+	     }
+	     rel2 {
+	     relative: 0.0 0.0;
+	     offset: 410 418;
+	     }
+	     image {
+	     normal: "current.png";
+	     }
+	   }
+	 }
+
+#define NUMBER(NAME,ULX,ULY,BRX,BRY)		\
+	 part {					\
+	 name: NAME;				\
+	 type: IMAGE;				\
+	   description {			\
+	   state: "default" 0.0;		\
+	   fixed: 0 0;				\
+	   min: 81 78;				\
+	   max: 81 78;				\
+	     rel1 {				\
+	     relative: 0.0 0.0;			\
+	     offset: ULX ULY;			\
+	     }					\
+	     rel2 {				\
+	     relative: 0.0 0.0;			\
+	     offset: BRX BRY;			\
+	     }					\
+	     image {				\
+	     normal: NAME".png";		\
+	     }					\
+	   }					\
+	 }
+
+	 NUMBER("star", 11, 112, 92, 190);
+	 NUMBER("one", 73, 47, 154, 124);
+	 NUMBER("two", 155, 13, 236, 90);
+	 NUMBER("three", 244, 13, 325, 90);
+	 NUMBER("four", 326, 47, 407, 124);
+	 NUMBER("five", 388, 112, 469, 190);
+
+	 NUMBER("six", 11, 324, 92, 402);
+	 NUMBER("seven", 73, 389, 154, 467);
+	 NUMBER("eight", 155, 423, 236, 501);
+	 NUMBER("nine", 244, 423, 325, 501);
+	 NUMBER("zero", 326, 389, 407, 467);
+	 NUMBER("hash", 388, 324, 469, 402);
+
+	 part {
+	 name: "quieter";
+	 type: IMAGE;
+	   description {
+	   state: "default" 0.0;
+	   fixed: 0 0;
+	   min: 51 80;
+	   max: 51 80;
+	     rel1 {
+	     relative: 0.0 0.0;
+	     offset: 12 216;
+	     }
+	     rel2 {
+	     relative: 0.0 0.0;
+	     offset: 64 296;
+	     }
+	     image {
+	     normal: "quieter.png";
+	     }
+	   }
+	 }
+
+	 part {
+	 name: "louder";
+	 type: IMAGE;
+	   description {
+	   state: "default" 0.0;
+	   fixed: 0 0;
+	   min: 51 80;
+	   max: 51 80;
+	     rel1 {
+	     relative: 0.0 0.0;
+	     offset: 417 216;
+	     }
+	     rel2 {
+	     relative: 0.0 0.0;
+	     offset: 468 296;
+	     }
+	     image {
+	     normal: "louder.png";
+	     }
+	   }
+	 }
+
+	 part {
+	 name: "redphone";
+	 type: IMAGE;
+	   description {
+	   state: "default" 0.0;
+	   fixed: 0 0;
+	   min: 89 83;
+	   max: 89 83;
+	     rel1 {
+	     relative: 0.0 0.0;
+	     offset: 16 487;
+	     }
+	     rel2 {
+	     relative: 0.0 0.0;
+	     offset: 105 569;
+	     }
+	     image {
+	     normal: "redphone.png";
+	     }
+	   }
+	 }
+
+	 part {
+	 name: "greenphone";
+	 type: IMAGE;
+	   description {
+	   state: "default" 0.0;
+	   fixed: 0 0;
+	   min: 89 83;
+	   max: 89 83;
+	     rel1 {
+	     relative: 0.0 0.0;
+	     offset: 375 487;
+	     }
+	     rel2 {
+	     relative: 0.0 0.0;
+	     offset: 464 569;
+	     }
+	     image {
+	     normal: "greenphone.png";
+	     }
+	   }
+	 }
+
+	 part {
+	 name: "speaker";
+	 type: IMAGE;
+	   description {
+	   state: "default" 0.0;
+	   fixed: 0 0;
+	   min: 81 81;
+	   max: 81 81;
+	     rel1 {
+	     relative: 0.0 0.0;
+	     offset: 200 494;
+	     }
+	     rel2 {
+	     relative: 0.0 0.0;
+	     offset: 281 575;
+	     }
+	     image {
+	     normal: "speaker.png";
+	     }
+	   }
+	 }
 
          part {
             name: "text";
