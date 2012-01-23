@@ -18,7 +18,10 @@
 ;;;; Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 ;;;; 02110-1301 USA
 
-(load "setup-load-path.scm")
+(cond-expand (guile-2)
+	     (else (load "guile-2.0-compat.scm")))
+
+(add-to-load-path (dirname (dirname (current-filename))))
 
 (use-modules (ice-9 getopt-long)
 	     (www server-utils big-dishing-loop)

@@ -1,8 +1,10 @@
 #! /usr/bin/guile -s
 !#
 
-(cond-expand (guile-2 (include "setup-load-path.scm"))
-             (else (load "setup-load-path.scm")))
+(cond-expand (guile-2)
+	     (else (load "guile-2.0-compat.scm")))
+
+(add-to-load-path (dirname (dirname (current-filename))))
 
 (use-modules (glib dbus)
 	     (glib variant)
