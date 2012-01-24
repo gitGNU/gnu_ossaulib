@@ -1,4 +1,6 @@
 
+;;; Phone UI implemented with Edje.
+
 (define-module (e17 phone)
   #:use-module (e17 edje)
   #:export (create-show-phone-ui
@@ -41,7 +43,6 @@
     ((dialer call hangup speaker)
      (edje-emit edje (format #f "~a,enable" group) ""))
     (else (error "No such group:" group))))
-
 
 ;; Disable a set of buttons.  GROUP is a symbol specifying a group of
 ;; buttons that can be enabled or disabled together: 'dialer, 'call,
