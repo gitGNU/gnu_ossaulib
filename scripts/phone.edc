@@ -19,6 +19,24 @@ images {
  image: "greenphone.png" COMP;
  image: "speaker.png" COMP;
  image: "current.png" COMP;
+
+ image: "star-d.png" COMP;
+ image: "one-d.png" COMP;
+ image: "two-d.png" COMP;
+ image: "three-d.png" COMP;
+ image: "four-d.png" COMP;
+ image: "five-d.png" COMP;
+ image: "six-d.png" COMP;
+ image: "seven-d.png" COMP;
+ image: "eight-d.png" COMP;
+ image: "nine-d.png" COMP;
+ image: "zero-d.png" COMP;
+ image: "hash-d.png" COMP;
+ image: "quieter-d.png" COMP;
+ image: "louder-d.png" COMP;
+ image: "redphone-d.png" COMP;
+ image: "greenphone-d.png" COMP;
+ image: "speaker-d.png" COMP;
 }
 
 collections {
@@ -92,6 +110,13 @@ collections {
 	     normal: NAME".png";		\
 	     }					\
 	   }					\
+	   description {			\
+	   state: "disabled" 0.0;		\
+	   inherit: "default" 0.0;		\
+	     image {				\
+	     normal: NAME"-d.png";		\
+	     }					\
+	   }					\
 	 }
 
 	 NUMBER("star", 11, 112, 92, 190);
@@ -128,6 +153,13 @@ collections {
 	     normal: "quieter.png";
 	     }
 	   }
+	   description {
+	   state: "disabled" 0.0;
+	   inherit: "default" 0.0;
+	     image {
+	     normal: "quieter-d.png";
+	     }
+	   }
 	 }
 
 	 part {
@@ -148,6 +180,13 @@ collections {
 	     }
 	     image {
 	     normal: "louder.png";
+	     }
+	   }
+	   description {
+	   state: "disabled" 0.0;
+	   inherit: "default" 0.0;
+	     image {
+	     normal: "louder-d.png";
 	     }
 	   }
 	 }
@@ -172,6 +211,13 @@ collections {
 	     normal: "redphone.png";
 	     }
 	   }
+	   description {
+	   state: "disabled" 0.0;
+	   inherit: "default" 0.0;
+	     image {
+	     normal: "redphone-d.png";
+	     }
+	   }
 	 }
 
 	 part {
@@ -194,6 +240,13 @@ collections {
 	     normal: "greenphone.png";
 	     }
 	   }
+	   description {
+	   state: "disabled" 0.0;
+	   inherit: "default" 0.0;
+	     image {
+	     normal: "greenphone-d.png";
+	     }
+	   }
 	 }
 
 	 part {
@@ -214,6 +267,13 @@ collections {
 	     }
 	     image {
 	     normal: "speaker.png";
+	     }
+	   }
+	   description {
+	   state: "disabled" 0.0;
+	   inherit: "default" 0.0;
+	     image {
+	     normal: "speaker-d.png";
 	     }
 	   }
 	 }
@@ -286,6 +346,98 @@ collections {
                // using linear time in 0.1 second
                transition: LINEAR 0.1;
             }
+
+	    program {
+            name: "dialer,disable";
+            signal: "dialer,disable";
+            source: "";
+            action: STATE_SET "disabled" 0.0;
+            target: "star";
+            target: "one";
+            target: "two";
+            target: "three";
+            target: "four";
+            target: "five";
+            target: "six";
+            target: "seven";
+            target: "eight";
+            target: "nine";
+            target: "zero";
+            target: "hash";
+	    }
+
+	    program {
+            name: "dialer,enable";
+            signal: "dialer,enable";
+            source: "";
+            action: STATE_SET "default" 0.0;
+            target: "star";
+            target: "one";
+            target: "two";
+            target: "three";
+            target: "four";
+            target: "five";
+            target: "six";
+            target: "seven";
+            target: "eight";
+            target: "nine";
+            target: "zero";
+            target: "hash";
+	    }
+
+	    program {
+            name: "call,disable";
+            signal: "call,disable";
+            source: "";
+            action: STATE_SET "disabled" 0.0;
+            target: "greenphone";
+	    }
+
+	    program {
+            name: "call,enable";
+            signal: "call,enable";
+            source: "";
+            action: STATE_SET "default" 0.0;
+            target: "greenphone";
+	    }
+
+	    program {
+            name: "hangup,disable";
+            signal: "hangup,disable";
+            source: "";
+            action: STATE_SET "disabled" 0.0;
+            target: "redphone";
+	    }
+
+	    program {
+            name: "hangup,enable";
+            signal: "hangup,enable";
+            source: "";
+            action: STATE_SET "default" 0.0;
+            target: "redphone";
+	    }
+
+	    program {
+            name: "speaker,disable";
+            signal: "speaker,disable";
+            source: "";
+            action: STATE_SET "disabled" 0.0;
+            target: "louder";
+            target: "quieter";
+            target: "speaker";
+	    }
+
+	    program {
+            name: "speaker,enable";
+            signal: "speaker,enable";
+            source: "";
+            action: STATE_SET "default" 0.0;
+            target: "louder";
+            target: "quieter";
+            target: "speaker";
+	    }
+
+
          }
       }
    }

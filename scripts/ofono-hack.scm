@@ -10,7 +10,7 @@
 	     (glib variant)
 	     (system foreign)
 	     (rnrs bytevectors)
-	     (e17 edje))
+	     (e17 phone))
 
 (define manager-proxy
   (g_dbus_proxy_new_for_bus_sync G_BUS_TYPE_SYSTEM
@@ -85,4 +85,18 @@
 
 (print-variant return-parms)
 
-(run-edje "phone.edj")
+(create-show-phone-ui (let ((count 0))
+			(lambda args
+			  (write args)
+			  (newline)
+			  (set! count (modulo (+ count 1) 8))
+			  (case count
+			    ((0) (disable-buttons 'dialer))
+			    ((1) (disable-buttons 'call))
+			    ((2) (disable-buttons 'hangup))
+			    ((3) (disable-buttons 'speaker))
+			    ((4) (enable-buttons 'dialer))
+			    ((5) (enable-buttons 'call))
+			    ((6) (enable-buttons 'hangup))
+			    ((7) (enable-buttons 'speaker)))))) 
+(run-ui-loop)
