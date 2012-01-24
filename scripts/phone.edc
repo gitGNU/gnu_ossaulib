@@ -294,58 +294,23 @@ collections {
 
                rel1 { // top-left at (WIDTH * 0.1 + 5, HEIGHT * 0.2 + 10)
                   relative: 0.1 0.2;
-                  offset: 5 10;
+                  offset: 0 0;
                }
                rel2 { // bottom-right at (WIDTH * 0.9 - 6, HEIGHT * 0.8 - 11)
-                  relative: 0.9 0.8;
-                  offset: -6 -11;
+                  relative: 0.9 0.7;
+                  offset: 0 0;
                }
 
                // define text specific state details
                text {
                   font: "Sans"; // using fontconfig name!
-                  size: 10;
-                  text: "hello world";
+                  size: 30;
+                  text: "";
                }
-            }
-
-            description {
-               state: "over" 0.0;
-               inherit: "default" 0.0; // copy everything from "default" at this point
-
-               color: 0 255 0 255; // override color, now it is green
             }
          }
 
-         // do programs to change color on text mouse in/out (over)
          programs {
-            program {
-               // what triggers this program:
-               signal: "mouse,in";
-               source: "text";
-
-               // what this program does:
-               action: STATE_SET "over" 0.0;
-               target: "text";
-
-               // do the state-set in a nice interpolation animation
-               // using linear time in 0.1 second
-               transition: LINEAR 0.1;
-            }
-
-            program {
-               // what triggers this program:
-               signal: "mouse,out";
-               source: "text";
-
-               // what this program does:
-               action: STATE_SET "default" 0.0;
-               target: "text";
-
-               // do the state-set in a nice interpolation animation
-               // using linear time in 0.1 second
-               transition: LINEAR 0.1;
-            }
 
 	    program {
             name: "dialer,disable";

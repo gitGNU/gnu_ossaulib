@@ -65,8 +65,8 @@
 ;; If the UI is already displaying some other current call
 ;; information, the new information replaces it.
 (define (show-current-call number incoming-ringing contact)
-  ...)
+  (edje-text-set edje "text" number))
 
 ;; Clear any displayed "current call" information.
 (define (clear-current-call)
-  ...)
+  (edje-text-set edje "text" ""))

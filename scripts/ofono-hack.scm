@@ -89,7 +89,7 @@
 			(lambda args
 			  (write args)
 			  (newline)
-			  (set! count (modulo (+ count 1) 8))
+			  (set! count (modulo (+ count 1) 10))
 			  (case count
 			    ((0) (disable-buttons 'dialer))
 			    ((1) (disable-buttons 'call))
@@ -98,5 +98,8 @@
 			    ((4) (enable-buttons 'dialer))
 			    ((5) (enable-buttons 'call))
 			    ((6) (enable-buttons 'hangup))
-			    ((7) (enable-buttons 'speaker)))))) 
+			    ((7) (enable-buttons 'speaker))
+			    ((8) (show-current-call "+442078333119" #f #f))
+			    ((9) (clear-current-call))))))
+
 (run-ui-loop)

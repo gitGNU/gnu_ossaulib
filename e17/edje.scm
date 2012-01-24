@@ -6,7 +6,8 @@
 	    edje-main-loop
 	    edje-connect
 	    edje-emit
-	    edje-cleanup))
+	    edje-cleanup
+	    edje-text-set))
 
 (define eina (dynamic-link "libeina"))
 (define evas (dynamic-link "libevas"))
@@ -107,6 +108,19 @@
 			    '*		; signal name
 			    '*		; source name
 			    )))
+
+(define edje_object_part_text_set
+  (pointer->procedure int8
+		      (dynamic-func "edje_object_part_text_set" edje)
+		      (list '*		; Evas_Object
+			    '*		; part name
+			    '*		; text name
+			    )))
+
+(define (edje-text-set edje part text)
+  (edje_object_part_text_set edje
+			     (string->pointer part)
+			     (string->pointer text)))
 
 ;; void(* Edje_Signal_Cb)(void *data, Evas_Object *obj, const char *emission, const char *source)
 (define (Edje_Signal_Cb proc)
