@@ -2,12 +2,11 @@
 (define-module (e17 edje)
   #:use-module (system foreign)
   #:use-module (rnrs bytevectors)
-  #:export (run-edje
-	    e17-main-loop
-	    cleanup-edje
-	    edje_object_signal_emit
-	    edje_object_signal_callback_add
-	    Edje_Signal_Cb))
+  #:export (edje-create-and-show
+	    edje-main-loop
+	    edje-connect
+	    edje-emit
+	    edje-cleanup))
 
 (define eina (dynamic-link "libeina"))
 (define evas (dynamic-link "libevas"))
@@ -118,37 +117,55 @@
 			      (pointer->string source)))
 		      (list '* '* '* '*)))
 
+;; Register a CALLBACK to be called when the part named SOURCE, in
+;; Edje object EDJE, emits the specified SIGNAL.
+(define (edje-connect edje signal source callback)
+  (edje_object_signal_callback_add edje
+				   (string->pointer signal)
+				   (string->pointer source)
+				   (Edje_Signal_Cb callback)
+				   %null-pointer))
+
+;; Emit the specified SIGNAL, with source SOURCE, in Edje object EDJE.
+(define (edje-emit edje signal source)
+  (edje_object_signal_emit edje
+			   (string->pointer signal)
+			   (string->pointer source)))
+
 (define edje-window (make-object-property))
 
-(define (run-edje edj-file)
+(define (edje-create-and-show edj-file width height)
   (dynamic-call "eina_init" eina)
   (dynamic-call "evas_init" evas)
   (dynamic-call "ecore_init" ecore)
   (dynamic-call "ecore_evas_init" ecore_evas)
   (dynamic-call "edje_init" edje)
 
-  (let* ((window (ecore_evas_software_x11_new %null-pointer 0 0 0 480 580))
+  (let* ((window (ecore_evas_software_x11_new
+		  %null-pointer 0
+		  0 0
+		  width height))
 	 (canvas (ecore_evas_get window))
-	 (edje (create-my-group canvas edj-file)))
+	 (edje (create-my-group canvas edj-file width height)))
     (ecore_evas_show window)
     (set! (edje-window edje) window)
     edje))
 
-(define (e17-main-loop)
+(define (edje-main-loop)
   (dynamic-call "ecore_main_loop_begin" ecore))
 
-(define (cleanup-edje edje)
+(define (edje-cleanup edje)
   (let ((window (edje-window edje)))
     (evas_object_del edje)
     (ecore_evas_free window)))
 
-(define (create-my-group canvas edj-file)
+(define (create-my-group canvas edj-file width height)
   (let ((edje (edje_object_add canvas)))
     (write (edje_object_file_set edje
 				 (string->pointer edj-file)
 				 (string->pointer "my_group")))
     (newline)
     (evas_object_move edje 0 0)
-    (evas_object_resize edje 480 580)
+    (evas_object_resize edje width height)
     (evas_object_show edje)  
     edje))

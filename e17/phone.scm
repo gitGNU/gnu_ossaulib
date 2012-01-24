@@ -1,7 +1,6 @@
 
 (define-module (e17 phone)
   #:use-module (e17 edje)
-  #:use-module (system foreign)
   #:export (create-show-phone-ui
 	    enable-buttons
 	    disable-buttons
@@ -17,25 +16,22 @@
 (define button-pressed #f)
 
 ;; Edje object for the UI.
-(define edje-object #f)
+(define edje #f)
 
 ;; Create and show the phone UI.
 (define (create-show-phone-ui button-pressed-cb)
   (set! button-pressed button-pressed-cb)
-  (set! edje-object (run-edje "phone.edj"))
-  (edje_object_signal_callback_add edje-object
-				   (string->pointer "mouse,down,*")
-				   (string->pointer "one")
-				   (Edje_Signal_Cb (lambda args
-						     (write args)
-						     (newline)
-						     (button-pressed 'dialer "one")))
-				   %null-pointer))
+  (set! edje (edje-create-and-show "phone.edj" 480 580))
+  (edje-connect edje
+		"mouse,down,*"
+		"one"
+		(lambda _
+		  (button-pressed 'dialer "one"))))
 
 ;; Run the UI's main loop.
 (define (run-ui-loop)
-  (e17-main-loop)
-  (cleanup-edje edje-object))
+  (edje-main-loop)
+  (edje-cleanup edje))
 
 ;; Enable a set of buttons.  GROUP is a symbol specifying a group of
 ;; buttons that can be enabled or disabled together: 'dialer, 'call,
@@ -43,9 +39,7 @@
 (define (enable-buttons group)
   (case group
     ((dialer call hangup speaker)
-     (edje_object_signal_emit edje-object
-			      (string->pointer (format #f "~a,enable" group))
-			      (string->pointer "")))
+     (edje-emit edje (format #f "~a,enable" group) ""))
     (else (error "No such group:" group))))
 
 
@@ -55,9 +49,7 @@
 (define (disable-buttons group)
   (case group
     ((dialer call hangup speaker)
-     (edje_object_signal_emit edje-object
-			      (string->pointer (format #f "~a,disable" group))
-			      (string->pointer "")))
+     (edje-emit edje (format #f "~a,disable" group) ""))
     (else (error "No such group:" group))))
 
 ;; Show information about the current incoming or outgoing call.
