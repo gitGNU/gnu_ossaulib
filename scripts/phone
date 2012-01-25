@@ -1,105 +1,119 @@
 #! /usr/bin/guile -s
 !#
 
+;; Phone application, for receiving incoming and making outgoing
+;; calls, using Edje for the UI and oFono for the phone hardware
+;; handling.
+
 (cond-expand (guile-2)
-	     (else (load "guile-2.0-compat.scm")))
+	     (else (error "\
+This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x.")))
 
 (add-to-load-path (dirname (dirname (current-filename))))
 
-(use-modules (glib dbus)
-	     (glib variant)
-	     (system foreign)
-	     (rnrs bytevectors)
-	     (e17 phone))
+(use-modules (ofono call)
+	     (e17 phone)
+	     (ice-9 receive))
 
-(define manager-proxy
-  (g_dbus_proxy_new_for_bus_sync G_BUS_TYPE_SYSTEM
-				 G_DBUS_PROXY_FLAGS_NONE
-				 %null-pointer
-				 (string->pointer "org.ofono")
-				 (string->pointer "/")
-				 (string->pointer "org.ofono.Manager")
-				 %null-pointer
-				 %null-pointer))
-(write manager-proxy)
-(newline)
+;; Call state: 'none, 'outgoing, 'incoming or 'active.
+(define call-state 'none)
 
-(define return-parms (g_dbus_proxy_call_sync manager-proxy
-					     (string->pointer "GetModems")
-					     %null-pointer
-					     0
-					     1000
-					     %null-pointer
-					     %null-pointer))
-(print-variant return-parms)
+;; Number being dialled.
+(define dialled-number "")
 
-(define modems (g_variant_get_child_value return-parms 0))
-(print-variant modems)
+;; Mapping from dialer button names to corresponding digits.
+(define dial-button-map '(("star" . "*")
+			  ("one" . "1")
+			  ("two" . "2")
+			  ("three" . "3")
+			  ("four" . "4")
+			  ("five" . "5")
+			  ("six" . "6")
+			  ("seven" . "7")
+			  ("eight" . "8")
+			  ("nine" . "9")
+			  ("zero" . "0")
+			  ("hash" . "#")))
 
-(define first-modem (g_variant_get_child_value modems 0))
-(print-variant first-modem)
+(define send-dtmf-digit #f)
+(define hang-up-or-reject #f)
+(define accept-incoming #f)
 
-(define modem-name (g_variant_get_child_value first-modem 0))
-(print-variant modem-name)
+(define (establish-call make-active-call)
+  (receive (to-hang-up to-send-dtmf-digit)
+      (make-active-call (lambda ()
+			  (set-call-state! 'none))
+			noop)
+    (set! hang-up-or-reject to-hang-up)
+    (set! send-dtmf-digit to-send-dtmf-digit)
+    (set-call-state! 'active)))
 
-(define modem-name-string
-  (pointer->string (g_variant_get_string modem-name %null-pointer)))
-(format #t "First modem's name is ~a\n" modem-name-string)
+(define (ui-button-pressed group name)
+  (case group
+    ((dialer)
+     (case call-state
+       ((none)
+	(set! dialled-number
+	      (string-append dialled-number
+			     (assoc-ref dial-button-map name)))
+	(show-current-call dialled-number #f #f)
+	(enable-buttons 'call))
+       ((active)
+	(send-dtmf-digit (assoc-ref dial-button-map name)))))
+    ((call)
+     (case call-state
+       ((none)
+	(set! hang-up-or-reject (dial dialled-number
+				      establish-call
+				      (lambda (reason)
+					(set-call-state! 'none))))
+	(set-call-state! 'outgoing))
+       ((incoming)
+	(establish-call accept-incoming))))
+    ((hangup)
+     (case call-state
+       ((outgoing incoming active)
+	(hang-up-or-reject))))))
 
-(define modem-proxy
-  (g_dbus_proxy_new_for_bus_sync G_BUS_TYPE_SYSTEM
-				 G_DBUS_PROXY_FLAGS_NONE
-				 %null-pointer
-				 (string->pointer "org.ofono")
-				 (string->pointer modem-name-string)
-				 (string->pointer "org.ofono.Modem")
-				 %null-pointer
-				 %null-pointer))
+(define (set-call-state! new-call-state)
+  (set! call-state new-call-state)
+  (case call-state
+    ((none)
+     (enable-buttons 'dialer)
+     (disable-buttons 'call)
+     (disable-buttons 'hangup)
+     (disable-buttons 'speaker)
+     (clear-current-call))
+    ((incoming)
+     (disable-buttons 'dialer)
+     (enable-buttons 'call)
+     (enable-buttons 'hangup))
+    ((outgoing)
+     (disable-buttons 'dialer)
+     (disable-buttons 'call)
+     (enable-buttons 'hangup))
+    ((active)
+     (enable-buttons 'dialer)
+     (disable-buttons 'call)
+     (enable-buttons 'hangup)
+     (enable-buttons 'speaker))))
 
-(write modem-proxy)
-(newline)
+(define (main)
+  ;; Define handling for incoming calls.
+  (set-incoming-call-proc (lambda (make-active-call reject)
+			    (case call-state
+			      ((none)
+			       (show-current-call "Incoming..." #f #f)
+			       (set! hang-up-or-reject reject)
+			       (set! accept-incoming make-active-call)
+			       (set-call-state! 'incoming)
+			       (lambda ()
+				 (set-call-state! 'none)))
+			      (else
+			       (reject)))))
+  ;; Create and show the phone UI.
+  (create-show-phone-ui ui-button-pressed)
+  (set-call-state! 'none)
+  (run-ui-loop))
 
-(define powered (g_variant_new_string (string->pointer "Powered")))
-(print-variant powered)
-(define true (g_variant_new_boolean TRUE))
-(print-variant true)
-
-(define bv (uint-list->bytevector (map pointer-address
-				       (list powered true))
-				  (native-endianness)
-				  (sizeof '*)))
-(write bv)
-(newline)
-
-(define parms (g_variant_new_tuple (bytevector->pointer bv) 2))
-(print-variant parms)
-
-(define return-parms
-  (g_dbus_proxy_call_sync modem-proxy
-			  (string->pointer "SetProperty")
-			  parms
-			  0
-			  1000
-			  %null-pointer
-			  %null-pointer))
-
-(print-variant return-parms)
-
-(create-show-phone-ui (let ((count 0))
-			(lambda args
-			  (write args)
-			  (newline)
-			  (set! count (modulo (+ count 1) 10))
-			  (case count
-			    ((0) (disable-buttons 'dialer))
-			    ((1) (disable-buttons 'call))
-			    ((2) (disable-buttons 'hangup))
-			    ((3) (disable-buttons 'speaker))
-			    ((4) (enable-buttons 'dialer))
-			    ((5) (enable-buttons 'call))
-			    ((6) (enable-buttons 'hangup))
-			    ((7) (enable-buttons 'speaker))
-			    ((8) (show-current-call "+442078333119" #f #f))
-			    ((9) (clear-current-call))))))
-
-(run-ui-loop)
+(main)

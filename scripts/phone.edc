@@ -91,7 +91,7 @@ collections {
 
 #define NUMBER(NAME,ULX,ULY,BRX,BRY)		\
 	 part {					\
-	 name: NAME;				\
+	 name: "dialer,"NAME;			\
 	 type: IMAGE;				\
 	   description {			\
 	   state: "default" 0.0;		\
@@ -134,7 +134,7 @@ collections {
 	 NUMBER("hash", 388, 324, 469, 402);
 
 	 part {
-	 name: "quieter";
+	 name: "speaker,quieter";
 	 type: IMAGE;
 	   description {
 	   state: "default" 0.0;
@@ -163,7 +163,7 @@ collections {
 	 }
 
 	 part {
-	 name: "louder";
+	 name: "speaker,louder";
 	 type: IMAGE;
 	   description {
 	   state: "default" 0.0;
@@ -192,7 +192,7 @@ collections {
 	 }
 
 	 part {
-	 name: "redphone";
+	 name: "hangup,redphone";
 	 type: IMAGE;
 	   description {
 	   state: "default" 0.0;
@@ -221,7 +221,7 @@ collections {
 	 }
 
 	 part {
-	 name: "greenphone";
+	 name: "call,greenphone";
 	 type: IMAGE;
 	   description {
 	   state: "default" 0.0;
@@ -250,7 +250,7 @@ collections {
 	 }
 
 	 part {
-	 name: "speaker";
+	 name: "speaker,speaker";
 	 type: IMAGE;
 	   description {
 	   state: "default" 0.0;
@@ -317,18 +317,18 @@ collections {
             signal: "dialer,disable";
             source: "";
             action: STATE_SET "disabled" 0.0;
-            target: "star";
-            target: "one";
-            target: "two";
-            target: "three";
-            target: "four";
-            target: "five";
-            target: "six";
-            target: "seven";
-            target: "eight";
-            target: "nine";
-            target: "zero";
-            target: "hash";
+            target: "dialer,star";
+            target: "dialer,one";
+            target: "dialer,two";
+            target: "dialer,three";
+            target: "dialer,four";
+            target: "dialer,five";
+            target: "dialer,six";
+            target: "dialer,seven";
+            target: "dialer,eight";
+            target: "dialer,nine";
+            target: "dialer,zero";
+            target: "dialer,hash";
 	    }
 
 	    program {
@@ -336,18 +336,18 @@ collections {
             signal: "dialer,enable";
             source: "";
             action: STATE_SET "default" 0.0;
-            target: "star";
-            target: "one";
-            target: "two";
-            target: "three";
-            target: "four";
-            target: "five";
-            target: "six";
-            target: "seven";
-            target: "eight";
-            target: "nine";
-            target: "zero";
-            target: "hash";
+            target: "dialer,star";
+            target: "dialer,one";
+            target: "dialer,two";
+            target: "dialer,three";
+            target: "dialer,four";
+            target: "dialer,five";
+            target: "dialer,six";
+            target: "dialer,seven";
+            target: "dialer,eight";
+            target: "dialer,nine";
+            target: "dialer,zero";
+            target: "dialer,hash";
 	    }
 
 	    program {
@@ -355,7 +355,7 @@ collections {
             signal: "call,disable";
             source: "";
             action: STATE_SET "disabled" 0.0;
-            target: "greenphone";
+            target: "call,greenphone";
 	    }
 
 	    program {
@@ -363,7 +363,7 @@ collections {
             signal: "call,enable";
             source: "";
             action: STATE_SET "default" 0.0;
-            target: "greenphone";
+            target: "call,greenphone";
 	    }
 
 	    program {
@@ -371,7 +371,7 @@ collections {
             signal: "hangup,disable";
             source: "";
             action: STATE_SET "disabled" 0.0;
-            target: "redphone";
+            target: "hangup,redphone";
 	    }
 
 	    program {
@@ -379,7 +379,7 @@ collections {
             signal: "hangup,enable";
             source: "";
             action: STATE_SET "default" 0.0;
-            target: "redphone";
+            target: "hangup,redphone";
 	    }
 
 	    program {
@@ -387,9 +387,9 @@ collections {
             signal: "speaker,disable";
             source: "";
             action: STATE_SET "disabled" 0.0;
-            target: "louder";
-            target: "quieter";
-            target: "speaker";
+            target: "speaker,louder";
+            target: "speaker,quieter";
+            target: "speaker,speaker";
 	    }
 
 	    program {
@@ -397,9 +397,9 @@ collections {
             signal: "speaker,enable";
             source: "";
             action: STATE_SET "default" 0.0;
-            target: "louder";
-            target: "quieter";
-            target: "speaker";
+            target: "speaker,louder";
+            target: "speaker,quieter";
+            target: "speaker,speaker";
 	    }
 
 

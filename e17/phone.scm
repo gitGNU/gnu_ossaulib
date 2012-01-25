@@ -3,6 +3,7 @@
 
 (define-module (e17 phone)
   #:use-module (e17 edje)
+  #:use-module (ice-9 string-fun)
   #:export (create-show-phone-ui
 	    enable-buttons
 	    disable-buttons
@@ -26,9 +27,12 @@
   (set! edje (edje-create-and-show "phone.edj" 480 580))
   (edje-connect edje
 		"mouse,down,*"
-		"one"
-		(lambda _
-		  (button-pressed 'dialer "one"))))
+		"*"
+		(lambda (obj signal source)
+		  (split-discarding-char
+		   #\, source
+		   (lambda (group name)
+		     (button-pressed (string->symbol group) name))))))
 
 ;; Run the UI's main loop.
 (define (run-ui-loop)
