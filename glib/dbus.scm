@@ -1,11 +1,9 @@
 
 (define-module (glib dbus)
   #:use-module (system foreign)
-  #:export (g_dbus_proxy_new_for_bus_sync
-	    G_BUS_TYPE_SYSTEM
-	    G_BUS_TYPE_SESSION
-	    G_DBUS_PROXY_FLAGS_NONE
-	    g_dbus_proxy_call_sync))
+  #:use-module (glib variant)
+  #:export (dbus-interface
+	    dbus-call))
 
 ;; (define glib (dynamic-link "libglib-2.0"))
 
@@ -34,13 +32,24 @@
 			    '*		; error
 			    )))
 
-
 ;; bus type
 (define G_BUS_TYPE_SYSTEM 1)
 (define G_BUS_TYPE_SESSION 2)
 
 ;; flags
 (define G_DBUS_PROXY_FLAGS_NONE 0)
+
+(define (dbus-interface bus-type service object-path interface-name)
+  (g_dbus_proxy_new_for_bus_sync (assq-ref `((system .  ,G_BUS_TYPE_SYSTEM)
+					     (session . ,G_BUS_TYPE_SESSION))
+					   bus-type)
+				 G_DBUS_PROXY_FLAGS_NONE
+				 %null-pointer
+				 (string->pointer service)
+				 (string->pointer object-path)
+				 (string->pointer interface-name)
+				 %null-pointer
+				 %null-pointer))
 
 (define g_dbus_proxy_call_sync
   (pointer->procedure '*
@@ -53,3 +62,12 @@
 			    '*		; cancellable
 			    '*		; error
 			    )))
+
+(define (dbus-call interface method . parameters)
+  (variant->scheme (g_dbus_proxy_call_sync interface
+					   (string->pointer method)
+					   (scheme->variant parameters)
+					   0
+					   1000
+					   %null-pointer
+					   %null-pointer)))
