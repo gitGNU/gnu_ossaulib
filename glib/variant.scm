@@ -2,21 +2,12 @@
 (define-module (glib variant)
   #:use-module (system foreign)
   #:use-module (rnrs bytevectors)
-  #:export (g_variant_print
-	    g_variant_get_type
-	    print-variant
-	    g_variant_get_child_value
-	    g_variant_get_string
-	    g_variant_new_string
-	    g_variant_new_boolean
-	    g_variant_new_tuple
+  #:export (print-variant
 	    FALSE
-	    TRUE
 	    scheme->variant
 	    variant->scheme))
 
 (define FALSE 0)
-(define TRUE 1)
 
 (define gobject (dynamic-link "libgobject-2.0"))
 (define glib (dynamic-link "libglib-2.0"))
