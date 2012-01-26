@@ -2,8 +2,10 @@
 (define-module (glib dbus)
   #:use-module (system foreign)
   #:use-module (glib variant)
+  #:use-module (glib object)
   #:export (dbus-interface
-	    dbus-call))
+	    dbus-call
+	    dbus-connect))
 
 ;; (define glib (dynamic-link "libglib-2.0"))
 
@@ -71,3 +73,10 @@
 					   1000
 					   %null-pointer
 					   %null-pointer)))
+
+(define (dbus-connect interface dbus-signal proc)
+  (gobject-connect interface
+		   "g-signal"
+		   (lambda (signal parameters)
+		     (if (string=? signal dbus-signal)
+			 (apply proc parameters)))))

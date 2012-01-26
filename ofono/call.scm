@@ -44,7 +44,8 @@
 			    (failed (error->reason error)))))
 	 (call-gone #f)
 	 (dtmf-digit-received #f))
-    (dbus-connect call "PropertyChanged"
+    (dbus-connect call
+		  "PropertyChanged"
 		  (lambda (property value)
 		    (cond ((eq? property 'State)
 			   (case value
@@ -104,7 +105,8 @@
 ;; thunk.
 (define (set-incoming-call-proc incoming-call)
   (let ((voice-call-manager (get-voice-call-manager)))
-    (dbus-connect voice-call-manager "CallAdded"
+    (dbus-connect voice-call-manager
+		  "CallAdded"
 		  (lambda (call properties)
 		    (if (eq? (assq-ref properties 'State) 'incoming)
 			(let* ((active-call-gone #f)
@@ -118,19 +120,30 @@
 						 (dbus-call call "Hangup")
 						 (set! rejected #t)))))
 			  (or rejected
-			      (dbus-connect call "PropertyChanged")))))))
-  ...)
+			      (dbus-connect call
+					    "PropertyChanged"
+					    ...))))))))
 
-(define manager-interface
-  (dbus-interface 'system "org.ofono" "/" "org.ofono.Manager"))
-
-(define return-parms
-  (dbus-call manager-interface "GetModems"))
-
-(define modem-name (caaar return-parms))
-(format #t "First modem's name is ~a\n" modem-name)
-
-(define modem-interface
-  (dbus-interface 'system "org.ofono" modem-name "org.ofono.Modem"))
-
-(dbus-call modem-interface "SetProperty" "Powered" #t)
+(define get-voice-call-manager
+  (let ((already-created #f))
+    (lambda ()
+      (or already-created
+	  (let* ((manager-interface (dbus-interface 'system
+						    "org.ofono"
+						    "/"
+						    "org.ofono.Manager"))
+		 (manager-parms (dbus-call manager-interface
+					   "GetModems"))
+		 (modem-name (caaar manager-parms))
+		 (modem-interface (dbus-interface 'system
+						  "org.ofono"
+						  modem-name
+						  "org.ofono.Modem"))
+		 (vcm-interface (dbus-interface 'system
+						"org.ofono"
+						modem-name
+						"org.ofono.VoiceCallManager")))
+	    (format #t "Modem name is ~a\n" modem-name)
+	    (dbus-call modem-interface "SetProperty" "Powered" #t)
+	    (set! already-created vcm-interface)
+	    vcm-interface)))))
