@@ -4,6 +4,7 @@
 (define-module (e17 phone)
   #:use-module (e17 edje)
   #:use-module (ice-9 string-fun)
+  #:use-module (ossau trc)
   #:export (create-show-phone-ui
 	    enable-buttons
 	    disable-buttons
@@ -29,10 +30,13 @@
 		"mouse,down,*"
 		"*"
 		(lambda (obj signal source)
-		  (split-discarding-char
-		   #\, source
-		   (lambda (group name)
-		     (button-pressed (string->symbol group) name))))))
+		  (trc 'edje-signal obj signal source)
+		  (if (string=? (edje-part-state obj source) "disabled")
+		      (trc "Source part is currently disabled")
+		      (split-discarding-char
+		       #\, source
+		       (lambda (group name)
+			 (button-pressed (string->symbol group) name)))))))
 
 ;; Run the UI's main loop.
 (define (run-ui-loop)

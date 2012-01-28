@@ -8,7 +8,8 @@
 	    edje-connect
 	    edje-emit
 	    edje-cleanup
-	    edje-text-set))
+	    edje-text-set
+	    edje-part-state))
 
 (define eina (dynamic-link "libeina"))
 (define evas (dynamic-link "libevas"))
@@ -151,6 +152,19 @@
   (edje_object_signal_emit edje
 			   (string->pointer signal)
 			   (string->pointer source)))
+
+(define edje_object_part_state_get
+  (pointer->procedure '*
+		      (dynamic-func "edje_object_part_state_get" edje)
+		      (list '*		; Evas_Object
+			    '*		; part name
+			    '*		; double pointer
+			    )))
+
+(define (edje-part-state edje part)
+  (pointer->string (edje_object_part_state_get edje
+					       (string->pointer part)
+					       %null-pointer)))
 
 (define edje-window (make-object-property))
 
