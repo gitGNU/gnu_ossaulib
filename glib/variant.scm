@@ -2,7 +2,7 @@
 (define-module (glib variant)
   #:use-module (system foreign)
   #:use-module (rnrs bytevectors)
-  #:export (print-variant
+  #:export (variant->string
 	    FALSE
 	    scheme->variant
 	    variant->scheme))
@@ -41,14 +41,12 @@
 			    '*		; length
 			    )))
 
-(define (print-variant variant)
+(define (variant->string variant)
   (if (null-pointer? variant)
-      (display "(null variant pointer)")
-      (begin
-	(display (pointer->string (g_variant_get_type variant)))
-	(display ": ")
-	(display (pointer->string (g_variant_print variant FALSE)))))
-  (newline))
+      "(null variant pointer)"
+      (string-append (pointer->string (g_variant_get_type variant))
+		     ": "
+		     (pointer->string (g_variant_print variant FALSE)))))
 
 (define g_variant_new_string
   (pointer->procedure '*
@@ -81,6 +79,12 @@
 		      (list '*		; GVariant *
 			    )))
 
+(define g_variant_new_variant
+  (pointer->procedure '*
+		      (dynamic-func "g_variant_new_variant" glib)
+		      (list '*		; GVariant *
+			    )))
+
 (define g_variant_get_boolean
   (pointer->procedure int
 		      (dynamic-func "g_variant_get_boolean" glib)
@@ -102,7 +106,7 @@
 	((string? scheme-value)
 	 (g_variant_new_string (string->pointer scheme-value)))
 	((boolean? scheme-value)
-	 (g_variant_new_boolean (if scheme-value 1 0)))
+	 (g_variant_new_variant (g_variant_new_boolean (if scheme-value 1 0))))
 	(else
 	 (error "No variant conversion yet for this type of value:"
 		scheme-value))))

@@ -3,23 +3,14 @@
   #:use-module (system foreign)
   #:use-module (glib variant)
   #:use-module (glib object)
+  #:use-module (rnrs bytevectors)
+  #:use-module (ice-9 format)
+  #:use-module (ossau trc)
   #:export (dbus-interface
 	    dbus-call
 	    dbus-connect))
 
-;; (define glib (dynamic-link "libglib-2.0"))
-
 (define gio (dynamic-link "libgio-2.0"))
-
-;; (define g_main_loop_new
-;;   (pointer->procedure '*
-;; 		      (dynamic-func "g_main_loop_new" glib)
-;; 		      (list '* int)))
-;; 
-;; (define loop (g_main_loop_new %null-pointer FALSE))
-;; 
-;; (write loop)
-;; (newline)
 
 (define g_dbus_proxy_new_for_bus_sync
   (pointer->procedure '*
@@ -66,17 +57,45 @@
 			    )))
 
 (define (dbus-call interface method . parameters)
-  (variant->scheme (g_dbus_proxy_call_sync interface
+  (trc 'dbus-call interface method)
+  (let ((parms (scheme->variant parameters))
+	(errloc (uint-list->bytevector '(0)
+				       (native-endianness)
+				       (sizeof '*))))
+    (trc 'dbus-call-parms (variant->string parms) parms)
+    (let* ((result (g_dbus_proxy_call_sync interface
 					   (string->pointer method)
-					   (scheme->variant parameters)
+					   parms
 					   0
 					   1000
 					   %null-pointer
-					   %null-pointer)))
+					   (bytevector->pointer errloc)))
+	   (gerror (make-pointer (car (bytevector->uint-list errloc
+							     (native-endianness)
+							     (sizeof '*))))))
+      (trc 'dbus-call-result (variant->string result) result)
+      (trc 'dbus-call-error gerror)
+      (or (null-pointer? gerror)
+	  (let ((parsed-error (parse-c-struct gerror (list int32 int '*))))
+	    (trc 'dbus-error-code (cadr parsed-error))
+	    (trc 'dbus-error-msg (pointer->string (caddr parsed-error)))))
+      (variant->scheme result))))
+
+(define interface-signal-alist (make-object-property))
 
 (define (dbus-connect interface dbus-signal proc)
-  (gobject-connect interface
-		   "g-signal"
-		   (lambda (signal parameters)
-		     (if (string=? signal dbus-signal)
-			 (apply proc parameters)))))
+  (let ((signal-alist (interface-signal-alist interface)))
+    (or signal-alist
+	(gobject-connect interface
+			 "g-signal"
+			 (lambda (signal parameters)
+			   (trc 'dbus-signal signal parameters)
+			   (let ((handler
+				  (assoc-ref (interface-signal-alist interface)
+					     signal)))
+			     (if handler
+				 (apply handler parameters))))))
+    (set! (interface-signal-alist interface)
+	  (assoc-set! (or signal-alist '())
+		      dbus-signal
+		      proc))))

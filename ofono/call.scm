@@ -1,6 +1,7 @@
 
 (define-module (ofono call)
   #:use-module (glib dbus)
+  #:use-module (ossau trc)
   #:export (dial
 	    set-incoming-call-proc))
 
@@ -39,18 +40,20 @@
 ;; before either ANSWERED or FAILED is called.
 (define (dial number answered failed)
   (let* ((voice-call-manager (get-voice-call-manager))
-	 (call (dbus-call voice-call-manager "Dial" number "default"
-			  (lambda (error)
-			    (failed (error->reason error)))))
+	 (call (car (dbus-call voice-call-manager "Dial" number "default")))
+	 (call-interface (dbus-interface 'system
+					 "org.ofono"
+					 call
+					 "org.ofono.VoiceCall"))
 	 (call-gone #f)
 	 (dtmf-digit-received #f))
-    (dbus-connect call
+    (dbus-connect call-interface
 		  "PropertyChanged"
 		  (lambda (property value)
-		    (cond ((eq? property 'State)
-			   (case value
+		    (cond ((string=? property "State")
+			   (case (string->symbol value)
 			     ((active)
-			      (answered (make-make-active-call call
+			      (answered (make-make-active-call call-interface
 							       (lambda (arg)
 								 (set! call-gone arg))
 							       noop)))
@@ -61,16 +64,20 @@
 				  ;; Call was still dialing.
 				  (failed value))))))))
     (lambda ()
-      (dbus-call call "Hangup"))))
+      (dbus-call call-interface "Hangup"))))
 
-(define (make-make-active-call call store-call-gone store-dtmf-digit-received)
+(define (make-make-active-call call-interface
+			       store-call-gone
+			       store-dtmf-digit-received)
   (lambda (call-gone dtmf-digit-received)
     (store-call-gone call-gone)
     (store-dtmf-digit-received dtmf-digit-received)
     (values (lambda ()
-	      (dbus-call call "Hangup"))
+	      (dbus-call call-interface "Hangup"))
 	    (lambda (digit)
-	      (dbus-call call "SendDTMF" digit)))))
+	      #f
+	      ;(dbus-call call-interface "SendDTMF" digit)
+	      ))))
 
 ;; (set-incoming-call-proc incoming-call) - Register a procedure to be
 ;; called if there is an incoming call.
@@ -108,21 +115,36 @@
     (dbus-connect voice-call-manager
 		  "CallAdded"
 		  (lambda (call properties)
-		    (if (eq? (assq-ref properties 'State) 'incoming)
-			(let* ((active-call-gone #f)
-			       (rejected #f)
-			       (unanswered-call-gone
-				(incoming-call (make-make-active-call call
-								      (lambda (arg)
-									(set! active-call-gone arg))
-								      noop)
-					       (lambda ()
-						 (dbus-call call "Hangup")
-						 (set! rejected #t)))))
-			  (or rejected
-			      (dbus-connect call
-					    "PropertyChanged"
-					    ...))))))))
+		    (if (string=? (assoc-ref properties "State") "incoming")
+			(let ((call-interface
+			       (dbus-interface 'system
+					       "org.ofono"
+					       call
+					       "org.ofono.VoiceCall"))
+			      (active-call-gone #f)
+			      (rejected #f))
+			  (let* ((unanswered-call-gone
+				  (incoming-call
+				   (make-make-active-call call-interface
+							  (lambda (arg)
+							    (set! active-call-gone
+								  arg))
+							  noop)
+				   (lambda ()
+				     (dbus-call call-interface "Hangup")
+				     (set! rejected #t)))))
+			    (or rejected
+				(dbus-connect call-interface
+					      "PropertyChanged"
+					      (lambda (property value)
+						(cond ((string=? property "State")
+						       (case (string->symbol value)
+							 ((disconnected)
+							  (if active-call-gone
+							      ;; Call was active.
+							      (active-call-gone)
+							      ;; Call was still unanswered.
+							      (unanswered-call-gone))))))))))))))))
 
 (define get-voice-call-manager
   (let ((already-created #f))
@@ -143,7 +165,10 @@
 						"org.ofono"
 						modem-name
 						"org.ofono.VoiceCallManager")))
-	    (format #t "Modem name is ~a\n" modem-name)
+	    (trc 'modem-name modem-name)
+	    (trc 'modem modem-interface)
+	    (trc 'vcm vcm-interface)
 	    (dbus-call modem-interface "SetProperty" "Powered" #t)
+	    (dbus-call modem-interface "SetProperty" "Online" #t)
 	    (set! already-created vcm-interface)
 	    vcm-interface)))))

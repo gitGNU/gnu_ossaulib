@@ -2,6 +2,7 @@
 (define-module (e17 edje)
   #:use-module (system foreign)
   #:use-module (rnrs bytevectors)
+  #:use-module (ossau trc)
   #:export (edje-create-and-show
 	    edje-main-loop
 	    edje-connect
@@ -14,6 +15,11 @@
 (define ecore (dynamic-link "libecore"))
 (define ecore_evas (dynamic-link "libecore_evas"))
 (define edje (dynamic-link "libedje"))
+
+(define ecore_main_loop_glib_integrate
+  (pointer->procedure int8
+		      (dynamic-func "ecore_main_loop_glib_integrate" ecore)
+		      '()))
 
 (define ecore_evas_new
   (pointer->procedure '*
@@ -166,6 +172,7 @@
     edje))
 
 (define (edje-main-loop)
+  (trc 'ecore-glib-integration  (ecore_main_loop_glib_integrate))
   (dynamic-call "ecore_main_loop_begin" ecore))
 
 (define (edje-cleanup edje)
@@ -175,10 +182,11 @@
 
 (define (create-my-group canvas edj-file width height)
   (let ((edje (edje_object_add canvas)))
-    (write (edje_object_file_set edje
-				 (string->pointer edj-file)
-				 (string->pointer "my_group")))
-    (newline)
+    (trc 'edje_object_file_set
+	 'rc
+	 (edje_object_file_set edje
+			       (string->pointer edj-file)
+			       (string->pointer "my_group")))
     (evas_object_move edje 0 0)
     (evas_object_resize edje width height)
     (evas_object_show edje)  
