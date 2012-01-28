@@ -14,5 +14,11 @@
 			  (basename (or (assq-ref loc 'filename) ""))
 			  (assq-ref loc 'line))))
     (display preamble)
-    (write args)
+    ;; When args is just a single string, display it; otherwise write
+    ;; the whole arg list.
+    (if (and (pair? args)
+	     (null? (cdr args))
+	     (string? (car args)))
+	(display (car args))
+	(write args))
     (newline)))
