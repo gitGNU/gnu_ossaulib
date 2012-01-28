@@ -10,6 +10,8 @@
 	    disable-buttons
 	    show-current-call
 	    clear-current-call
+	    show-call-state
+	    clear-call-state
 	    run-ui-loop))
 
 ;; Callback to call when a button is pressed.  The callback will be
@@ -78,3 +80,9 @@
 ;; Clear any displayed "current call" information.
 (define (clear-current-call)
   (edje-text-set edje "text" ""))
+
+(define (show-call-state call-state)
+  (edje-text-set edje "call_state" call-state))
+
+(define (clear-call-state)
+  (edje-text-set edje "call_state" ""))

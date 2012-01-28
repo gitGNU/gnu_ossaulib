@@ -20,8 +20,6 @@
 ;;
 ;; Add PIM.  (EDS?)
 ;;
-;; Add UI indication of call state.
-;;
 ;; Add UI indication of ID of incoming call, instead of "Incoming...".
 ;;
 ;; Make number field scale automatically when it needs to.
@@ -105,20 +103,24 @@ This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x."))
      (disable-buttons 'hangup)
      (disable-buttons 'speaker)
      (clear-current-call)
+     (clear-call-state)
      (set! dialled-number ""))
     ((incoming)
      (disable-buttons 'dialer)
      (enable-buttons 'call)
-     (enable-buttons 'hangup))
+     (enable-buttons 'hangup)
+     (show-call-state "Incoming Call..."))
     ((outgoing)
      (disable-buttons 'dialer)
      (disable-buttons 'call)
-     (enable-buttons 'hangup))
+     (enable-buttons 'hangup)
+     (show-call-state "Dialling..."))
     ((active)
      (enable-buttons 'dialer)
      (disable-buttons 'call)
      (enable-buttons 'hangup)
-     (enable-buttons 'speaker))))
+     (enable-buttons 'speaker)
+     (show-call-state "Active Call"))))
 
 (define (main)
   ;; Define handling for incoming calls.
