@@ -5,6 +5,27 @@
 ;; calls, using Edje for the UI and oFono for the phone hardware
 ;; handling.
 
+;; To do:
+;;
+;; Release proxy object when call terminates, so as not to be
+;; signalled multiple times on future calls.
+;;
+;; Investigate/fix GVariant reference counting behaviour.
+;;
+;; Consider GC in general - does Scheme retain references sufficiently?
+;;
+;; Add (default) ringtone.
+;;
+;; Add in-call audio routing calls.  (Link to PulseAudio?)
+;;
+;; Add PIM.  (EDS?)
+;;
+;; Add UI indication of call state.
+;;
+;; Add UI indication of ID of incoming call, instead of "Incoming...".
+;;
+;; Make number field scale automatically when it needs to.
+
 (cond-expand (guile-2)
 	     (else (error "\
 This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x.")))
