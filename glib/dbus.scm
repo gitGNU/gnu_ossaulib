@@ -57,7 +57,7 @@
 			    )))
 
 (define (dbus-call interface method . parameters)
-  (trc 'dbus-call interface method)
+  (trc 'dbus-call interface method parameters)
   (let ((parms (scheme->variant parameters))
 	(errloc (uint-list->bytevector '(0)
 				       (native-endianness)
