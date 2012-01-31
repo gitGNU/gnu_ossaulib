@@ -129,23 +129,29 @@
 			     (string->pointer part)
 			     (string->pointer text)))
 
-;; void(* Edje_Signal_Cb)(void *data, Evas_Object *obj, const char *emission, const char *source)
-(define (Edje_Signal_Cb proc)
-  (procedure->pointer void
-		      (lambda (data obj emission source)
-			(proc obj
-			      (pointer->string emission)
-			      (pointer->string source)))
-		      (list '* '* '* '*)))
+(define edje-signal-handlers (make-object-property))
 
 ;; Register a CALLBACK to be called when the part named SOURCE, in
 ;; Edje object EDJE, emits the specified SIGNAL.
 (define (edje-connect edje signal source callback)
-  (edje_object_signal_callback_add edje
-				   (string->pointer signal)
-				   (string->pointer source)
-				   (Edje_Signal_Cb callback)
-				   %null-pointer))
+  (let* ((handler (lambda (data obj emission source)
+		    (callback obj
+			      (pointer->string emission)
+			      (pointer->string source))))
+	 (ptr (procedure->pointer void
+				  handler
+				  (list '* '* '* '*))))
+    ;; Protect this handler from being collected.
+    (set! (edje-signal-handlers edje)
+	  (acons (cons signal source)
+		 (cons handler ptr)
+		 (or (edje-signal-handlers edje) '())))
+    ;; Register the handler.
+    (edje_object_signal_callback_add edje
+				     (string->pointer signal)
+				     (string->pointer source)
+				     ptr
+				     %null-pointer)))
 
 ;; Emit the specified SIGNAL, with source SOURCE, in Edje object EDJE.
 (define (edje-emit edje signal source)
