@@ -128,10 +128,10 @@ This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x."))
 
 (define (main)
   ;; Define handling for incoming calls.
-  (set-incoming-call-proc (lambda (make-active-call reject)
+  (set-incoming-call-proc (lambda (number make-active-call reject)
 			    (case call-state
 			      ((none)
-			       (show-current-call "Incoming..." #f #f)
+			       (show-current-call number #f #f)
 			       (set! hang-up-or-reject reject)
 			       (set! accept-incoming make-active-call)
 			       (set-call-state! 'incoming)

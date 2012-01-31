@@ -87,12 +87,13 @@
 ;; called if there is an incoming call.
 ;;
 ;; When there is an incoming call, (ofono call) will call
-;; INCOMING-CALL as (INCOMING-CALL make-active-call reject).
-;; MAKE-ACTIVE-CALL is a procedure with the same purpose and signature
-;; as described above under 'dial'.  REJECT is a thunk that the UI can
-;; call to reject the incoming call.  The INCOMING-CALL invocation
-;; should return a thunk that (ofono call) can call to indicate that
-;; the incoming call is no longer available.
+;; INCOMING-CALL as (INCOMING-CALL number make-active-call reject).
+;; NUMBER is the calling number, as a string, or "Unknown" if not
+;; known.  MAKE-ACTIVE-CALL is a procedure with the same purpose and
+;; signature as described above under 'dial'.  REJECT is a thunk that
+;; the UI can call to reject the incoming call.  The INCOMING-CALL
+;; invocation should return a thunk that (ofono call) can call to
+;; indicate that the incoming call is no longer available.
 ;;
 ;; The anticipated mainline scenario is that the UI indicates to its
 ;; human user that there is an incoming call (e.g. by playing a ring
@@ -125,10 +126,13 @@
 					       "org.ofono"
 					       call
 					       "org.ofono.VoiceCall"))
+			      (number (or (assoc-ref properties "LineIdentification")
+					  "Unknown"))
 			      (active-call-gone #f)
 			      (rejected #f))
 			  (let* ((unanswered-call-gone
 				  (incoming-call
+				   number
 				   (make-make-active-call call-interface
 							  (lambda (arg)
 							    (set! active-call-gone
