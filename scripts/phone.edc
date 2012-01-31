@@ -314,20 +314,19 @@ collections {
                state: "default" 0.0;
                color: 255 0 0 255; // red
 
-               // define part coordinates:
-
-               rel1 { // top-left at (WIDTH * 0.1 + 5, HEIGHT * 0.2 + 10)
-                  relative: 0.1 0.2;
-                  offset: 0 0;
+               rel1 {
+                  relative: 0.0 0.0;
+                  offset: 100 200;
                }
-               rel2 { // bottom-right at (WIDTH * 0.9 - 6, HEIGHT * 0.8 - 11)
-                  relative: 0.9 0.7;
-                  offset: 0 0;
+               rel2 {
+                  relative: 0.0 0.0;
+                  offset: 380 250;
                }
 
                // define text specific state details
                text {
                   font: "Sans"; // using fontconfig name!
+		  fit: 1 1;
                   size: 30;
                   text: "";
                }
