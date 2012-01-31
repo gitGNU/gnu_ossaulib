@@ -10,7 +10,8 @@
 
 (define (trc* loc . args)
   (let ((preamble (format #f
-			  "~12a ~5@a: "
+			  "~8x ~12a ~5@a: "
+			  (object-address (current-thread))
 			  (basename (or (assq-ref loc 'filename) ""))
 			  (assq-ref loc 'line))))
     (display preamble)
