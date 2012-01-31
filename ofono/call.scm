@@ -50,19 +50,23 @@
     (dbus-connect call-interface
 		  "PropertyChanged"
 		  (lambda (property value)
+		    (trc 'property-changed property value)
 		    (cond ((string=? property "State")
 			   (case (string->symbol value)
 			     ((active)
+			      (trc "Call is active")
 			      (answered (make-make-active-call call-interface
 							       (lambda (arg)
 								 (set! call-gone arg))
 							       noop)))
 			     ((disconnected)
+			      (trc "Call is disconnected")
 			      (if call-gone
 				  ;; Call was active, so use call-gone.
 				  (call-gone)
 				  ;; Call was still dialing.
-				  (failed value))))))))
+				  (failed value))
+			      (dbus-interface-release call-interface)))))))
     (lambda ()
       (dbus-call call-interface "Hangup"))))
 
@@ -144,7 +148,8 @@
 							      ;; Call was active.
 							      (active-call-gone)
 							      ;; Call was still unanswered.
-							      (unanswered-call-gone))))))))))))))))
+							      (unanswered-call-gone))
+							  (dbus-interface-release call-interface)))))))))))))))
 
 (define get-voice-call-manager
   (let ((already-created #f))
