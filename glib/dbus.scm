@@ -8,7 +8,8 @@
   #:use-module (ossau trc)
   #:export (dbus-interface
 	    dbus-call
-	    dbus-connect))
+	    dbus-connect
+	    dbus-interface-release))
 
 (define gio (dynamic-link "libgio-2.0"))
 
@@ -43,6 +44,16 @@
 				 (string->pointer interface-name)
 				 %null-pointer
 				 %null-pointer))
+
+(define (dbus-interface-release interface)
+  (trc 'dbus-interface-release interface)
+  (let ((id (interface-signal-id interface)))
+    (trc 'id id)
+    (if id
+	(gobject-disconnect interface id)))
+  (set! (interface-signal-id interface) #f)
+  (set! (interface-signal-alist interface) #f)
+  (gobject-unref interface))
 
 (define g_dbus_proxy_call_sync
   (pointer->procedure '*
@@ -81,21 +92,25 @@
 	    (trc 'dbus-error-msg (pointer->string (caddr parsed-error)))))
       (variant->scheme result))))
 
+(define interface-signal-id (make-object-property))
 (define interface-signal-alist (make-object-property))
 
 (define (dbus-connect interface dbus-signal proc)
-  (let ((signal-alist (interface-signal-alist interface)))
-    (or signal-alist
-	(gobject-connect interface
-			 "g-signal"
-			 (lambda (signal parameters)
-			   (trc 'dbus-signal signal parameters)
-			   (let ((handler
-				  (assoc-ref (interface-signal-alist interface)
-					     signal)))
-			     (if handler
-				 (apply handler parameters))))))
-    (set! (interface-signal-alist interface)
-	  (assoc-set! (or signal-alist '())
-		      dbus-signal
-		      proc))))
+  (trc 'dbus-connect interface dbus-signal proc)
+  (or (interface-signal-id interface)
+      (let* ((g-signal-handler (lambda (signal parameters)
+				 (trc 'dbus-signal interface signal parameters)
+				 (let ((handler
+					(assoc-ref (interface-signal-alist interface)
+						   signal)))
+				   (if handler
+				       (apply handler parameters)))))
+	     (id (gobject-connect interface
+				  "g-signal"
+				  g-signal-handler)))
+	(trc "Set up g-signal handler" 'id id)
+	(set! (interface-signal-id interface) id)))
+  (set! (interface-signal-alist interface)
+	(assoc-set! (or (interface-signal-alist interface) '())
+		    dbus-signal
+		    proc)))
