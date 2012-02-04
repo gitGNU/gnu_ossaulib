@@ -37,6 +37,9 @@ images {
  image: "redphone-d.png" COMP;
  image: "greenphone-d.png" COMP;
  image: "speaker-d.png" COMP;
+
+ image: "delete.png" COMP;
+ image: "delete-d.png" COMP;
 }
 
 collections {
@@ -85,6 +88,35 @@ collections {
 	     }
 	     image {
 	     normal: "current.png";
+	     }
+	   }
+	 }
+
+	 part {
+	 name: "delete,delete";
+	 type: IMAGE;
+	   description {
+	   state: "default" 0.0;
+	   fixed: 0 0;
+	   min: 67 67;
+	   max: 67 67;
+	     rel1 {
+	     relative: 0.0 0.0;
+	     offset: 206 322;
+	     }
+	     rel2 {
+	     relative: 0.0 0.0;
+	     offset: 274 390;
+	     }
+	     image {
+	     normal: "delete.png";
+	     }
+	   }
+	   description {
+	   state: "disabled" 0.0;
+	   inherit: "default" 0.0;
+	     image {
+	     normal: "delete-d.png";
 	     }
 	   }
 	 }
@@ -425,6 +457,21 @@ collections {
             target: "speaker,speaker";
 	    }
 
+	    program {
+            name: "delete,disable";
+            signal: "delete,disable";
+            source: "";
+            action: STATE_SET "disabled" 0.0;
+            target: "delete,delete";
+	    }
+
+	    program {
+            name: "delete,enable";
+            signal: "delete,enable";
+            source: "";
+            action: STATE_SET "default" 0.0;
+            target: "delete,delete";
+	    }
 
          }
       }
