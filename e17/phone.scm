@@ -68,7 +68,7 @@
 ;; 'hangup or 'speaker.
 (define (enable-buttons group)
   (case group
-    ((dialer call hangup speaker)
+    ((dialer call hangup speaker delete)
      (edje-emit edje (format #f "~a,enable" group) ""))
     (else (error "No such group:" group))))
 
@@ -77,7 +77,7 @@
 ;; 'hangup or 'speaker.
 (define (disable-buttons group)
   (case group
-    ((dialer call hangup speaker)
+    ((dialer call hangup speaker delete)
      (edje-emit edje (format #f "~a,disable" group) ""))
     (else (error "No such group:" group))))
 
