@@ -195,7 +195,12 @@
 	    (trc 'modem-name modem-name)
 	    (trc 'modem modem-interface)
 	    (trc 'vcm vcm-interface)
-	    (dbus-call modem-interface "SetProperty" "Powered" #t)
-	    (dbus-call modem-interface "SetProperty" "Online" #t)
+	    (let loop ()
+	      (or (false-if-exception
+		   (begin
+		     (dbus-call modem-interface "SetProperty" "Powered" #t)
+		     (dbus-call modem-interface "SetProperty" "Online" #t)
+		     #t))
+		  (loop)))
 	    (set! already-created vcm-interface)
 	    vcm-interface)))))

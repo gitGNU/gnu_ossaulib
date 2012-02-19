@@ -96,7 +96,7 @@
 					   (string->pointer method)
 					   parms
 					   0
-					   1000
+					   10000
 					   %null-pointer
 					   (bytevector->pointer errloc)))
 	   (gerror (make-pointer (car (bytevector->uint-list errloc
@@ -107,7 +107,10 @@
       (or (null-pointer? gerror)
 	  (let ((parsed-error (parse-c-struct gerror (list int32 int '*))))
 	    (trc 'dbus-error-code (cadr parsed-error))
-	    (trc 'dbus-error-msg (pointer->string (caddr parsed-error)))))
+	    (trc 'dbus-error-msg (pointer->string (caddr parsed-error)))
+	    (throw 'dbus-error
+		   (cadr parsed-error)
+		   (pointer->string (caddr parsed-error)))))
       (variant->scheme result))))
 
 (define interface-signal-id (make-object-property))
