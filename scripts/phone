@@ -132,7 +132,7 @@ This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x."))
      (disable-buttons 'hangup)
      (disable-buttons 'speaker)
      (clear-current-call)
-     (clear-call-state)
+     (show-call-state registration)
      (set! dialled-number "")
      (set! send-dtmf-digit #f)
      (set! hang-up-or-reject #f)
@@ -157,6 +157,8 @@ This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x."))
      (enable-buttons 'speaker)
      (show-call-state "Active Call"))))
 
+(define registration "No registration")
+
 (define (main)
   ;; Define handling for incoming calls.
   (set-incoming-call-proc (lambda (number make-active-call reject)
@@ -173,6 +175,15 @@ This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x."))
   ;; Create and show the phone UI.
   (create-show-phone-ui ui-button-pressed)
   (set-call-state! 'none)
+  ;; Define handling for registration state.
+  (set-registration-proc (lambda (props)
+			   (set! registration
+				 (format #f "~a ~a ~a%"
+					 (assoc-ref props "Name")
+					 (assoc-ref props "Technology")
+					 (assoc-ref props "Strength")))
+			   (if (eq? call-state 'none)
+			       (show-call-state registration))))
   (run-ui-loop))
 
 (main)

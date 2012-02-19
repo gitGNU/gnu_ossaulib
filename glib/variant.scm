@@ -109,6 +109,24 @@
 		      (list '*		; GVariant *
 			    )))
 
+(define g_variant_get_byte
+  (pointer->procedure uint8
+		      (dynamic-func "g_variant_get_byte" glib)
+		      (list '*		; GVariant *
+			    )))
+
+(define g_variant_get_uint16
+  (pointer->procedure uint16
+		      (dynamic-func "g_variant_get_uint16" glib)
+		      (list '*		; GVariant *
+			    )))
+
+(define g_variant_get_uint32
+  (pointer->procedure uint32
+		      (dynamic-func "g_variant_get_uint32" glib)
+		      (list '*		; GVariant *
+			    )))
+
 (define (scheme->variant scheme-value)
   (cond ((null? scheme-value)
 	 %null-pointer)
@@ -153,6 +171,12 @@
 	   (not (zero? (g_variant_get_boolean variant))))
 	  ((#\v)
 	   (variant->scheme (g_variant_get_variant variant)))
+	  ((#\y)
+	   (g_variant_get_byte variant))
+	  ((#\q)
+	   (g_variant_get_uint16 variant))
+	  ((#\u)
+	   (g_variant_get_uint32 variant))
 	  (else
 	   (error "No scheme conversion yet for this type of value:"
 		  type-string))))))

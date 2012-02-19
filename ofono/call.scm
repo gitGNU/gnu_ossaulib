@@ -21,7 +21,8 @@
   #:use-module (glib dbus)
   #:use-module (ossau trc)
   #:export (dial
-	    set-incoming-call-proc))
+	    set-incoming-call-proc
+	    set-registration-proc))
 
 ;; This module maps from oFono's D-Bus API for voice call handling to
 ;; a higher-level and Schemey Scheme API.  As a shorthand we refer to
@@ -203,4 +204,23 @@
 		     #t))
 		  (loop)))
 	    (set! already-created vcm-interface)
+	    (set! reg-interface (dbus-interface 'system
+						"org.ofono"
+						modem-name
+						"org.ofono.NetworkRegistration"))
+
 	    vcm-interface)))))
+
+(define reg-interface #f)
+
+(define (set-registration-proc reg-proc)
+  (let ((props (car (dbus-call reg-interface "GetProperties"))))
+    (trc 'reg-properties props)
+    (reg-proc props)
+    (dbus-connect reg-interface
+		  "PropertyChanged"
+		  (lambda (property value)
+		    (trc 'reg-property-changed property value)
+		    (set! props
+			  (assoc-set! props property value))
+		    (reg-proc props)))))
