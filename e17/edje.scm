@@ -190,9 +190,16 @@
 					       (string->pointer part)
 					       %null-pointer)))
 
+(define ecore_evas_title_set
+  (pointer->procedure '*
+		      (dynamic-func "ecore_evas_title_set" ecore_evas)
+		      (list '*		; Ecore_Evas
+			    '*		; title
+			    )))
+
 (define edje-window (make-object-property))
 
-(define (edje-create-and-show edj-file width height)
+(define (edje-create-and-show edj-file width height title)
   (dynamic-call "eina_init" eina)
   (dynamic-call "evas_init" evas)
   (dynamic-call "ecore_init" ecore)
@@ -205,6 +212,7 @@
 		  width height))
 	 (canvas (ecore_evas_get window))
 	 (edje (create-my-group canvas edj-file width height)))
+    (ecore_evas_title_set window (string->pointer title))
     (ecore_evas_show window)
     (set! (edje-window edje) window)
     edje))

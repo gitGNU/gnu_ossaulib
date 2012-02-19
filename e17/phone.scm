@@ -45,7 +45,7 @@
 ;; Create and show the phone UI.
 (define (create-show-phone-ui button-pressed-cb)
   (set! button-pressed button-pressed-cb)
-  (set! edje (edje-create-and-show "phone.edj" 480 580))
+  (set! edje (edje-create-and-show "phone.edj" 480 580 "Phone"))
   (edje-connect edje
 		"mouse,down,*"
 		"*"
