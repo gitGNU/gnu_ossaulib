@@ -80,11 +80,11 @@ collections {
 	   max: 339 325;
 	     rel1 {
 	     relative: 0.0 0.0;
-	     offset: 70 92;
+	     offset: 70 87;
 	     }
 	     rel2 {
 	     relative: 0.0 0.0;
-	     offset: 410 418;
+	     offset: 410 415;
 	     }
 	     image {
 	     normal: "current.png";
@@ -102,11 +102,11 @@ collections {
 	   max: 67 67;
 	     rel1 {
 	     relative: 0.0 0.0;
-	     offset: 206 322;
+	     offset: 206 317;
 	     }
 	     rel2 {
 	     relative: 0.0 0.0;
-	     offset: 274 390;
+	     offset: 274 385;
 	     }
 	     image {
 	     normal: "delete.png";
@@ -151,19 +151,19 @@ collections {
 	   }					\
 	 }
 
-	 NUMBER("star", 11, 112, 92, 190);
-	 NUMBER("one", 73, 47, 154, 124);
-	 NUMBER("two", 155, 13, 236, 90);
-	 NUMBER("three", 244, 13, 325, 90);
-	 NUMBER("four", 326, 47, 407, 124);
-	 NUMBER("five", 388, 112, 469, 190);
+	 NUMBER("star", 11, 107, 92, 185);
+	 NUMBER("one", 73, 42, 154, 119);
+	 NUMBER("two", 155, 8, 236, 85);
+	 NUMBER("three", 244, 8, 325, 85);
+	 NUMBER("four", 326, 42, 407, 119);
+	 NUMBER("five", 388, 107, 469, 185);
 
-	 NUMBER("six", 11, 324, 92, 402);
-	 NUMBER("seven", 73, 389, 154, 467);
-	 NUMBER("eight", 155, 423, 236, 501);
-	 NUMBER("nine", 244, 423, 325, 501);
-	 NUMBER("zero", 326, 389, 407, 467);
-	 NUMBER("hash", 388, 324, 469, 402);
+	 NUMBER("six", 11, 319, 92, 397);
+	 NUMBER("seven", 73, 384, 154, 462);
+	 NUMBER("eight", 155, 418, 236, 496);
+	 NUMBER("nine", 244, 418, 325, 496);
+	 NUMBER("zero", 326, 384, 407, 462);
+	 NUMBER("hash", 388, 319, 469, 397);
 
 	 part {
 	 name: "speaker,quieter";
@@ -175,11 +175,11 @@ collections {
 	   max: 51 80;
 	     rel1 {
 	     relative: 0.0 0.0;
-	     offset: 12 216;
+	     offset: 12 211;
 	     }
 	     rel2 {
 	     relative: 0.0 0.0;
-	     offset: 64 296;
+	     offset: 64 291;
 	     }
 	     image {
 	     normal: "quieter.png";
@@ -204,11 +204,11 @@ collections {
 	   max: 51 80;
 	     rel1 {
 	     relative: 0.0 0.0;
-	     offset: 417 216;
+	     offset: 417 211;
 	     }
 	     rel2 {
 	     relative: 0.0 0.0;
-	     offset: 468 296;
+	     offset: 468 291;
 	     }
 	     image {
 	     normal: "louder.png";
@@ -233,11 +233,11 @@ collections {
 	   max: 89 83;
 	     rel1 {
 	     relative: 0.0 0.0;
-	     offset: 16 487;
+	     offset: 16 462;
 	     }
 	     rel2 {
 	     relative: 0.0 0.0;
-	     offset: 105 569;
+	     offset: 105 544;
 	     }
 	     image {
 	     normal: "redphone.png";
@@ -262,11 +262,11 @@ collections {
 	   max: 89 83;
 	     rel1 {
 	     relative: 0.0 0.0;
-	     offset: 375 487;
+	     offset: 375 462;
 	     }
 	     rel2 {
 	     relative: 0.0 0.0;
-	     offset: 464 569;
+	     offset: 464 544;
 	     }
 	     image {
 	     normal: "greenphone.png";
@@ -286,16 +286,17 @@ collections {
 	 type: IMAGE;
 	   description {
 	   state: "default" 0.0;
+	   visible: 0;
 	   fixed: 0 0;
 	   min: 81 81;
 	   max: 81 81;
 	     rel1 {
 	     relative: 0.0 0.0;
-	     offset: 200 494;
+	     offset: 200 489;
 	     }
 	     rel2 {
 	     relative: 0.0 0.0;
-	     offset: 281 575;
+	     offset: 281 570;
 	     }
 	     image {
 	     normal: "speaker.png";
@@ -321,11 +322,11 @@ collections {
 
                rel1 {
                   relative: 0.0 0.0;
-                  offset: 114 151;
+                  offset: 114 146;
                }
                rel2 {
                   relative: 0.0 0.0;
-                  offset: 366 190;
+                  offset: 366 185;
                }
 
                // define text specific state details
@@ -348,11 +349,11 @@ collections {
 
                rel1 {
                   relative: 0.0 0.0;
-                  offset: 100 200;
+                  offset: 100 195;
                }
                rel2 {
                   relative: 0.0 0.0;
-                  offset: 380 250;
+                  offset: 380 245;
                }
 
                // define text specific state details
