@@ -40,4 +40,6 @@
 	     (string? (car args)))
 	(display (car args))
 	(write args))
-    (newline)))
+    (newline))
+  (force-output))
+
