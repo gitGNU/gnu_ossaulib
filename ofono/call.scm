@@ -196,13 +196,12 @@
 	    (trc 'modem-name modem-name)
 	    (trc 'modem modem-interface)
 	    (trc 'vcm vcm-interface)
-	    (let loop ()
-	      (or (false-if-exception
-		   (begin
-		     (dbus-call modem-interface "SetProperty" "Powered" #t)
-		     (dbus-call modem-interface "SetProperty" "Online" #t)
-		     #t))
-		  (loop)))
+	    (repeat-until-no-exception (lambda ()
+					 (dbus-call modem-interface "SetProperty" "Powered" #t))
+				       10)
+	    (repeat-until-no-exception (lambda ()
+					 (dbus-call modem-interface "SetProperty" "Online" #t))
+				       10)
 	    (set! already-created vcm-interface)
 	    (set! reg-interface (dbus-interface 'system
 						"org.ofono"
@@ -210,6 +209,16 @@
 						"org.ofono.NetworkRegistration"))
 
 	    vcm-interface)))))
+
+(define (repeat-until-no-exception thunk sleep-interval)
+  (let loop ()
+    (or (false-if-exception
+	 (begin
+	   (thunk)
+	   #t))
+	(begin
+	  (sleep sleep-interval)
+	  (loop)))))
 
 (define reg-interface #f)
 
