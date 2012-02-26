@@ -28,8 +28,8 @@
 
 (define (trc* loc . args)
   (let ((preamble (format #f
-			  "~8x ~12a ~5@a: "
-			  (object-address (current-thread))
+			  "~a ~12a ~5@a: "
+			  (strftime "%b %d %T" (localtime (current-time)))
 			  (basename (or (assq-ref loc 'filename) ""))
 			  (assq-ref loc 'line))))
     (display preamble)
