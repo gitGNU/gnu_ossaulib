@@ -68,6 +68,7 @@ This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x."))
 (define send-dtmf-digit #f)
 (define hang-up-or-reject #f)
 (define accept-incoming #f)
+(define voice-routing-pipe #f)
 
 (define (establish-call make-active-call)
   (receive (to-hang-up to-send-dtmf-digit)
@@ -100,8 +101,7 @@ This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x."))
 					(set-call-state! 'none))))
 	(set-call-state! 'outgoing))
        ((incoming)
-	(establish-call accept-incoming)))
-     (system "/root/gta04-gsm-voice-routing/gsm-voice-routing &"))
+	(establish-call accept-incoming))))
     ((hangup)
      (case call-state
        ((outgoing incoming active)
@@ -121,11 +121,22 @@ This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x."))
 		      (disable-buttons 'call)
 		      (disable-buttons 'delete)))))))))))
 
+(define (start-voice-routing)
+  (or voice-routing-pipe
+      (set! voice-routing-pipe
+	    (open-input-pipe "nice -20 /root/gta04-gsm-voice-routing/gsm-voice-routing"))))
+
+(define (stop-voice-routing)
+  (if voice-routing-pipe
+      (begin
+	(close-pipe voice-routing-pipe)
+	(set! voice-routing-pipe #f))))
 
 (define (set-call-state! new-call-state)
   (set! call-state new-call-state)
   (case call-state
     ((none)
+     (stop-voice-routing)
      (enable-buttons 'dialer)
      (disable-buttons 'call)
      (disable-buttons 'delete)
@@ -149,13 +160,15 @@ This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x."))
      (disable-buttons 'call)
      (disable-buttons 'delete)
      (enable-buttons 'hangup)
-     (show-call-state "Dialling..."))
+     (show-call-state "Dialling...")
+     (start-voice-routing))
     ((active)
      (enable-buttons 'dialer)
      (disable-buttons 'call)
      (enable-buttons 'hangup)
      (enable-buttons 'speaker)
-     (show-call-state "Active Call"))))
+     (show-call-state "Active Call")
+     (start-voice-routing))))
 
 (define registration "No registration")
 
