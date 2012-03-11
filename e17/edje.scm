@@ -27,7 +27,9 @@
 	    edje-emit
 	    edje-cleanup
 	    edje-text-set
-	    edje-part-state))
+	    edje-part-state
+	    ecore-watch-fd
+	    ecore-unwatch-fd))
 
 (define eina (dynamic-link "libeina"))
 (define evas (dynamic-link "libevas"))
@@ -39,6 +41,23 @@
   (pointer->procedure int8
 		      (dynamic-func "ecore_main_loop_glib_integrate" ecore)
 		      '()))
+
+(define ecore_main_fd_handler_add
+  (pointer->procedure '*
+		      (dynamic-func "ecore_main_fd_handler_add" ecore)
+		      (list int
+			    int
+			    '*
+			    '*
+			    '*
+			    '*
+			    )))
+
+(define ecore_main_fd_handler_del
+  (pointer->procedure '*
+		      (dynamic-func "ecore_main_fd_handler_del" ecore)
+		      (list '*
+			    )))
 
 (define ecore_evas_new
   (pointer->procedure '*
@@ -170,6 +189,28 @@
 				     (string->pointer source)
 				     ptr
 				     %null-pointer)))
+
+(define ecore-fd-handlers (make-object-property))
+
+(define (ecore-watch-fd fd proc)
+  (let* ((handler (lambda _ (proc) 1))
+	 (ptr (procedure->pointer int
+				  handler
+				  (list '* '*))))
+    (set! (ecore-fd-handlers fd)
+	  (list handler
+		ptr
+		(ecore_main_fd_handler_add fd
+					   1 ; ECORE_FD_READ
+					   ptr
+					   %null-pointer
+					   %null-pointer
+					   %null-pointer)))))
+
+(define (ecore-unwatch-fd fd)
+  (let ((handlers (ecore-fd-handlers fd)))
+    (ecore_main_fd_handler_del (caddr handlers)))
+  (set! (ecore-fd-handlers fd) #f))
 
 ;; Emit the specified SIGNAL, with source SOURCE, in Edje object EDJE.
 (define (edje-emit edje signal source)
