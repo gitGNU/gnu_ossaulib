@@ -98,9 +98,7 @@
     (values (lambda ()
 	      (dbus-call call-interface "Hangup"))
 	    (lambda (digit)
-	      #f
-	      ;(dbus-call call-interface "SendDTMF" digit)
-	      ))))
+	      (dbus-call (get-voice-call-manager) "SendTones" digit)))))
 
 ;; (set-incoming-call-proc incoming-call) - Register a procedure to be
 ;; called if there is an incoming call.
