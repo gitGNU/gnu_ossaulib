@@ -180,8 +180,11 @@
 						    "org.ofono"
 						    "/"
 						    "org.ofono.Manager"))
-		 (manager-parms (dbus-call manager-interface
-					   "GetModems"))
+		 (manager-parms
+		  (repeat-until-no-exception (lambda ()
+					       (dbus-call manager-interface
+							  "GetModems"))
+					     10))
 		 (modem-name (caaar manager-parms))
 		 (modem-interface (dbus-interface 'system
 						  "org.ofono"
