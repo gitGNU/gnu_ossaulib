@@ -43,7 +43,11 @@ This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x."))
 
 (use-modules (ofono call)
 	     (e17 phone)
-	     (ice-9 receive))
+	     (ice-9 receive)
+	     (ice-9 popen)
+	     (e17 edje)
+	     (ossau trc)
+	     (ice-9 rdelim))
 
 ;; Call state: 'none, 'outgoing, 'incoming or 'active.
 (define call-state 'none)
@@ -123,12 +127,17 @@ This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x."))
 
 (define (start-voice-routing)
   (or voice-routing-pipe
-      (set! voice-routing-pipe
-	    (open-input-pipe "nice -20 /root/gta04-gsm-voice-routing/gsm-voice-routing"))))
+      (begin
+	(set! voice-routing-pipe
+	      (open-input-pipe "/root/gta04-gsm-voice-routing/gsm-voice-routing 2>&1"))
+	(ecore-watch-fd (fileno voice-routing-pipe)
+			(lambda ()
+			  (trc 'voice-routing (read-line voice-routing-pipe 'trim)))))))
 
 (define (stop-voice-routing)
   (if voice-routing-pipe
       (begin
+	(ecore-unwatch-fd (fileno voice-routing-pipe))
 	(close-pipe voice-routing-pipe)
 	(set! voice-routing-pipe #f))))
 
