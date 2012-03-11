@@ -209,14 +209,13 @@
 	    vcm-interface)))))
 
 (define (repeat-until-no-exception thunk sleep-interval)
-  (let loop ()
-    (or (false-if-exception
-	 (begin
-	   (thunk)
-	   #t))
-	(begin
-	  (sleep sleep-interval)
-	  (loop)))))
+  (car (let loop ()
+	 (or (false-if-exception
+	      (begin
+		(list (thunk))))
+	     (begin
+	       (sleep sleep-interval)
+	       (loop))))))
 
 (define reg-interface #f)
 
