@@ -199,4 +199,9 @@ This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x."))
 			       (show-call-state registration))))
   (run-ui-loop))
 
+(display "=== logread | grep invalid ===\n")
+(force-output)
+(system "logread | grep invalid")
+(display "=== logread | grep invalid ===\n")
+
 (main)
