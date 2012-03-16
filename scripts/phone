@@ -47,7 +47,9 @@ This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x."))
 	     (ice-9 popen)
 	     (e17 edje)
 	     (ossau trc)
-	     (ice-9 rdelim))
+	     (ice-9 rdelim)
+	     (ofono modem)
+	     (ofono registration))
 
 ;; Call state: 'none, 'outgoing, 'incoming or 'active.
 (define call-state 'none)
@@ -198,14 +200,19 @@ This \"phone\" application requires Guile 2.0; it cannot run under Guile 1.x."))
   (create-show-phone-ui ui-button-pressed)
   (set-call-state! 'none)
   ;; Define handling for registration state.
-  (set-registration-proc (lambda (props)
+  (add-registration-hook (lambda (state props)
 			   (set! registration
-				 (format #f "~a ~a ~a%"
-					 (assoc-ref props "Name")
-					 (assoc-ref props "Technology")
-					 (assoc-ref props "Strength")))
+				 (case state
+				   ((none) "No modem")
+				   ((unregistered) "Unregistered")
+				   (else 
+				    (format #f "~a ~a ~a%"
+					    (assoc-ref props "Name")
+					    (assoc-ref props "Technology")
+					    (assoc-ref props "Strength")))))
 			   (if (eq? call-state 'none)
 			       (show-call-state registration))))
+  (connect-to-ofono)
   (run-ui-loop))
 
 (display "=== logread | grep invalid ===\n")

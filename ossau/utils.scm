@@ -18,7 +18,8 @@
 
 (define-module (ossau utils)
   #:export (ensure-directory
-	    system/format)
+	    system/format
+	    repeat-until-no-exception)
   #:export-syntax (with-working-directory))
 
 (cond-expand (guile-2)
@@ -45,3 +46,12 @@
 
 (define (system/format string . args)
   (system (apply format #f string args)))
+
+(define (repeat-until-no-exception thunk sleep-interval)
+  (car (let loop ()
+	 (or (false-if-exception
+	      (begin
+		(list (thunk))))
+	     (begin
+	       (sleep sleep-interval)
+	       (loop))))))

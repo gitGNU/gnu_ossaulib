@@ -20,9 +20,10 @@
 (define-module (ofono call)
   #:use-module (glib dbus)
   #:use-module (ossau trc)
+  #:use-module (ofono modem)
+  #:use-module (ofono registration)
   #:export (dial
-	    set-incoming-call-proc
-	    set-registration-proc))
+	    set-incoming-call-proc))
 
 ;; This module maps from oFono's D-Bus API for voice call handling to
 ;; a higher-level and Schemey Scheme API.  As a shorthand we refer to
@@ -58,36 +59,37 @@
 ;; to cancel the outgoing call attempt.  This is only valid if done
 ;; before either ANSWERED or FAILED is called.
 (define (dial number answered failed)
-  (let* ((voice-call-manager (get-voice-call-manager))
-	 (call (car (dbus-call voice-call-manager "Dial" number "default")))
-	 (call-interface (dbus-interface 'system
-					 "org.ofono"
-					 call
-					 "org.ofono.VoiceCall"))
-	 (call-gone #f)
-	 (dtmf-digit-received #f))
-    (dbus-connect call-interface
-		  "PropertyChanged"
-		  (lambda (property value)
-		    (trc 'property-changed property value)
-		    (cond ((string=? property "State")
-			   (case (string->symbol value)
-			     ((active)
-			      (trc "Call is active")
-			      (answered (make-make-active-call call-interface
-							       (lambda (arg)
-								 (set! call-gone arg))
-							       noop)))
-			     ((disconnected)
-			      (trc "Call is disconnected")
-			      (if call-gone
-				  ;; Call was active, so use call-gone.
-				  (call-gone)
-				  ;; Call was still dialing.
-				  (failed value))
-			      (dbus-interface-release call-interface)))))))
-    (lambda ()
-      (dbus-call call-interface "Hangup"))))
+  (if vcm-interface
+      (let* ((call (car (dbus-call vcm-interface "Dial" number "default")))
+	     (call-interface (dbus-interface 'system
+					     "org.ofono"
+					     call
+					     "org.ofono.VoiceCall"))
+	     (call-gone #f)
+	     (dtmf-digit-received #f))
+	(dbus-connect call-interface
+		      "PropertyChanged"
+		      (lambda (property value)
+			(trc 'property-changed property value)
+			(cond ((string=? property "State")
+			       (case (string->symbol value)
+				 ((active)
+				  (trc "Call is active")
+				  (answered (make-make-active-call call-interface
+								   (lambda (arg)
+								     (set! call-gone arg))
+								   noop)))
+				 ((disconnected)
+				  (trc "Call is disconnected")
+				  (if call-gone
+				      ;; Call was active, so use call-gone.
+				      (call-gone)
+				      ;; Call was still dialing.
+				      (failed value))
+				  (dbus-interface-release call-interface)))))))
+	(lambda ()
+	  (dbus-call call-interface "Hangup")))
+      (failed "modem not ready")))
 
 (define (make-make-active-call call-interface
 			       store-call-gone
@@ -98,7 +100,12 @@
     (values (lambda ()
 	      (dbus-call call-interface "Hangup"))
 	    (lambda (digit)
-	      (dbus-call (get-voice-call-manager) "SendTones" digit)))))
+	      (dbus-call vcm-interface "SendTones" digit)))))
+
+;; Until the UI calls set-incoming-call, our default behaviour is to
+;; reject an incoming call.
+(define (notify-incoming-call number make-active-call reject)
+  (reject))
 
 ;; (set-incoming-call-proc incoming-call) - Register a procedure to be
 ;; called if there is an incoming call.
@@ -133,103 +140,66 @@
 ;; incoming-call procedure, and doesn't need to return a call-gone
 ;; thunk.
 (define (set-incoming-call-proc incoming-call)
-  (let ((voice-call-manager (get-voice-call-manager)))
-    (dbus-connect voice-call-manager
-		  "CallAdded"
-		  (lambda (call properties)
-		    (if (string=? (assoc-ref properties "State") "incoming")
-			(let ((call-interface
-			       (dbus-interface 'system
-					       "org.ofono"
-					       call
-					       "org.ofono.VoiceCall"))
-			      (number (or (assoc-ref properties "LineIdentification")
-					  "Unknown"))
-			      (active-call-gone #f)
-			      (rejected #f))
-			  (let* ((unanswered-call-gone
-				  (incoming-call
-				   number
-				   (make-make-active-call call-interface
-							  (lambda (arg)
-							    (set! active-call-gone
-								  arg))
-							  noop)
-				   (lambda ()
-				     (dbus-call call-interface "Hangup")
-				     (set! rejected #t)))))
-			    (or rejected
-				(dbus-connect call-interface
-					      "PropertyChanged"
-					      (lambda (property value)
-						(cond ((string=? property "State")
-						       (case (string->symbol value)
-							 ((disconnected)
-							  (if active-call-gone
-							      ;; Call was active.
-							      (active-call-gone)
-							      ;; Call was still unanswered.
-							      (unanswered-call-gone))
-							  (dbus-interface-release call-interface)))))))))))))))
+  (set! notify-incoming-call incoming-call))
 
-(define get-voice-call-manager
-  (let ((already-created #f))
-    (lambda ()
-      (or already-created
-	  (let* ((manager-interface (dbus-interface 'system
-						    "org.ofono"
-						    "/"
-						    "org.ofono.Manager"))
-		 (manager-parms
-		  (repeat-until-no-exception (lambda ()
-					       (dbus-call manager-interface
-							  "GetModems"))
-					     10))
-		 (modem-name (caaar manager-parms))
-		 (modem-interface (dbus-interface 'system
-						  "org.ofono"
-						  modem-name
-						  "org.ofono.Modem"))
-		 (vcm-interface (dbus-interface 'system
-						"org.ofono"
-						modem-name
-						"org.ofono.VoiceCallManager")))
-	    (trc 'modem-name modem-name)
-	    (trc 'modem modem-interface)
-	    (trc 'vcm vcm-interface)
-	    (repeat-until-no-exception (lambda ()
-					 (dbus-call modem-interface "SetProperty" "Powered" #t))
-				       10)
-	    (repeat-until-no-exception (lambda ()
-					 (dbus-call modem-interface "SetProperty" "Online" #t))
-				       10)
-	    (set! already-created vcm-interface)
-	    (set! reg-interface (dbus-interface 'system
-						"org.ofono"
-						modem-name
-						"org.ofono.NetworkRegistration"))
+(define vcm-interface #f)
 
-	    vcm-interface)))))
+(define (modem-state-hook path properties)
+  (if properties
+      ;; Modem exists.
+      (let ((interfaces (assoc-ref properties "Interfaces")))
+	(if (member "org.ofono.VoiceCallManager" interfaces)
+	    ;; Voice call interface is available.
+	    (if (not vcm-interface)
+		;; We haven't already connected to the
+		;; voice call interface.
+		(begin
+		  (set! vcm-interface
+			(dbus-interface 'system
+					"org.ofono"
+					path
+					"org.ofono.VoiceCallManager"))
+		  (dbus-connect vcm-interface
+				"CallAdded"
+				(lambda (call properties)
+				  (if (string=? (assoc-ref properties "State")
+						"incoming")
+				      (let ((call-interface
+					     (dbus-interface 'system
+							     "org.ofono"
+							     call
+							     "org.ofono.VoiceCall"))
+					    (number (or (assoc-ref properties "LineIdentification")
+							"Unknown"))
+					    (active-call-gone #f)
+					    (rejected #f))
+					(let* ((unanswered-call-gone
+						(notify-incoming-call
+						 number
+						 (make-make-active-call call-interface
+									(lambda (arg)
+									  (set! active-call-gone
+										arg))
+									noop)
+						 (lambda ()
+						   (dbus-call call-interface "Hangup")
+						   (set! rejected #t)))))
+					  (or rejected
+					      (dbus-connect call-interface
+							    "PropertyChanged"
+							    (lambda (property value)
+							      (cond ((string=? property "State")
+								     (case (string->symbol value)
+								       ((disconnected)
+									(if active-call-gone
+									    ;; Call was active.
+									    (active-call-gone)
+									    ;; Call was still unanswered.
+									    (unanswered-call-gone))
+									(dbus-interface-release call-interface)))))))))))))))
+	    ;; Voice call interface is not available.
+	    (set! vcm-interface #f)))
+      ;; Modem has disappeared.
+      (set! vcm-interface #f)))
 
-(define (repeat-until-no-exception thunk sleep-interval)
-  (car (let loop ()
-	 (or (false-if-exception
-	      (begin
-		(list (thunk))))
-	     (begin
-	       (sleep sleep-interval)
-	       (loop))))))
-
-(define reg-interface #f)
-
-(define (set-registration-proc reg-proc)
-  (let ((props (car (dbus-call reg-interface "GetProperties"))))
-    (trc 'reg-properties props)
-    (reg-proc props)
-    (dbus-connect reg-interface
-		  "PropertyChanged"
-		  (lambda (property value)
-		    (trc 'reg-property-changed property value)
-		    (set! props
-			  (assoc-set! props property value))
-		    (reg-proc props)))))
+(add-modem-state-hook modem-state-hook)
